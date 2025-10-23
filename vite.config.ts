@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { VitePWA } from 'vite-plugin-pwa';
-import { compression } from 'vite-plugin-compression';
+import compression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
       manifest: {
         name: 'Personal Identity Platform',
         short_name: 'Identity',
-        description: 'Balkrishna Agarwal - Personal Identity Platform',
+        description: 'Mohit Patel - Personal Identity Platform',
         theme_color: '#FFD93D',
         background_color: '#FFF9E6',
         display: 'standalone',

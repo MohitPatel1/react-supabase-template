@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Name**: Personal Identity Platform  
-**Owner**: Balkrishna Agarwal  
+**Owner**: Moohit Patel  
 **Type**: Production-grade personal website serving as digital presence  
 **Purpose**: Establish personal brand, showcase skills, enable connections, learn advanced React
 
@@ -937,7 +937,7 @@ When continuing this project with AI:
 
 ## Summary
 
-This is a **production-grade personal identity platform** for Balkrishna Agarwal that serves as his complete digital presence. It's not just a portfolio—it's an interactive, living space where visitors experience Balkrishna through delightful interactions, mini-apps, and personalized content.
+This is a **production-grade personal identity platform** for Mohit Patel that serves as his complete digital presence. It's not just a portfolio—it's an interactive, living space where visitors experience Balkrishna through delightful interactions, mini-apps, and personalized content.
 
 **Tech Stack**: React 18 + TypeScript + Vite + MUI + Supabase + comprehensive testing (Vitest + RTL + Playwright)
 

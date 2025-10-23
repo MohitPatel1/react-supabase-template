@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Production-grade personal identity platform with React, TypeScript, and advanced performance optimizations",
-  "author": "Balkrishna Agarwal",
+  "author": "Mohit Patel",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0",
