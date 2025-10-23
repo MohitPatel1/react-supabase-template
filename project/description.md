@@ -1,6 +1,6 @@
 Personal Identity Platform - Comprehensive Project Description
 Project Overview
-A production-grade personal website serving as a digital identity platform that creates meaningful connections between the creator (Balkrishna Agarwal) and visitors. The platform combines portfolio showcase, interactive mini-applications, and personalization features to deliver a delightful, performant, and memorable experience.
+A production-grade personal website serving as a digital identity platform that creates meaningful connections between the creator (Mohit Patel) and visitors. The platform combines portfolio showcase, interactive mini-applications, and personalization features to deliver a delightful, performant, and memorable experience.
 Core Purpose & Vision
 This website transcends traditional portfolio sites by becoming an interactive, living representation of the creator's professional identity. Visitors will discover, learn, and engage through immersive experiences while benefiting from cutting-edge performance optimizations and scalable architecture. The project doubles as a practical learning laboratory for mastering advanced React patterns and modern web development practices.
 Technical Architecture

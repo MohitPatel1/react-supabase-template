@@ -1,0 +1,359 @@
+---
+alwaysApply: true
+---
+```markdown
+# Personal Identity Platform - Cursor Rules
+
+## Project Overview
+Production-grade personal website serving as an interactive digital identity platform. Combines portfolio showcase, mini-applications, and personalization features with exceptional performance and scalability.
+
+## Core Technologies
+- **Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite
+- **UI Library**: Material UI (MUI) v5+
+- **Backend**: Supabase (auth, database, storage)
+- **Testing**: Playwright (E2E), React Testing Library, Vitest
+- **Code Quality**: Biome.js for linting and formatting
+- **State Management**: Context API / Zustand (choose based on complexity)
+- **Routing**: React Router v6
+
+## Code Style & Standards
+
+### TypeScript
+- Use strict mode with no implicit `any`
+- Define explicit types for all props, function parameters, and return values
+- Prefer interfaces over types for object shapes
+- Use discriminated unions for complex state management
+- Create shared types in `src/types/` directory
+
+### Component Architecture
+- Use functional components with hooks exclusively
+- Implement composition patterns over inheritance
+- Create compound components for complex UI patterns
+- Extract reusable logic into custom hooks in `src/hooks/`
+- Keep components under 200 lines; split if larger
+
+### File Organization
+```
+src/
+├── features/          # Feature-based modules
+│   ├── auth/
+│   ├── profile/
+│   ├── mini-apps/
+│   └── ...
+├── components/        # Shared components
+│   ├── ui/           # MUI-based design system components
+│   └── common/       # Reusable business components
+├── hooks/            # Custom React hooks
+├── utils/            # Utility functions
+├── types/            # TypeScript type definitions
+├── services/         # API and Supabase services
+├── contexts/         # React Context providers
+├── routes/           # Route definitions
+└── theme/            # MUI theme configuration
+```
+
+### Naming Conventions
+- **Components**: PascalCase (e.g., `UserProfile.tsx`)
+- **Hooks**: camelCase with 'use' prefix (e.g., `useAuth.ts`)
+- **Utils**: camelCase (e.g., `formatDate.ts`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `API_BASE_URL`)
+- **Types/Interfaces**: PascalCase (e.g., `UserProfile`)
+
+## Material UI Best Practices
+
+### Theming
+- Define all theme customizations in `src/theme/index.ts`
+- Use theme tokens exclusively; never hardcode colors, spacing, or breakpoints
+- Support both light and dark modes
+- Create custom theme extensions for brand-specific values
+
+### Component Usage
+- Always use MUI's `styled()` API for custom styling
+- Leverage MUI's `sx` prop for one-off styles
+- Never write custom CSS files; use MUI's styling solution
+- Use MUI's Grid, Stack, and Box for layouts
+- Implement responsive design using MUI's breakpoint system
+
+### Custom Components
+- Build themed components in `src/components/ui/`
+- Document all components in Storybook
+- Ensure all custom components accept MUI's common props (`sx`, `className`)
+- Maintain consistent API patterns with MUI components
+
+## Performance Optimization
+
+### Code Splitting
+- Implement route-based code splitting with React.lazy()
+- Use dynamic imports for heavy components
+- Lazy load mini-applications on demand
+- Split vendor bundles intelligently
+
+### Memoization
+- Use `React.memo()` for expensive components that receive stable props
+- Apply `useMemo()` for expensive calculations
+- Use `useCallback()` for functions passed to memoized children
+- Profile before optimizing; don't premature optimize
+
+### Image & Asset Optimization
+- Use WebP/AVIF formats with fallbacks
+- Implement lazy loading for all images
+- Use MUI's Image component or custom lazy loading wrapper
+- Optimize bundle size; keep initial JS < 200KB gzipped
+
+### List Rendering
+- Use `react-window` or `react-virtualized` for large lists (>100 items)
+- Implement pagination or infinite scroll where appropriate
+- Use stable keys for list items
+
+## State Management
+
+### Guidelines
+- Use React Context for global app state (theme, auth, user preferences)
+- Consider Zustand for complex state with multiple subscribers
+- Keep state as local as possible
+- Avoid prop drilling; use composition or context
+
+### Supabase Integration
+- Centralize all Supabase calls in `src/services/supabase/`
+- Implement proper error handling and retry logic
+- Use Supabase's real-time subscriptions judiciously
+- Type all Supabase responses with generated types
+
+## Testing Requirements
+
+### Unit Tests (Vitest)
+- Test all utility functions and custom hooks
+- Maintain >80% coverage for critical business logic
+- Mock external dependencies (Supabase, APIs)
+- Place tests adjacent to source files: `Component.test.tsx`
+
+### Component Tests (React Testing Library)
+- Test user interactions, not implementation details
+- Query by accessible roles and labels
+- Test error states and loading states
+- Avoid testing MUI internals
+
+### E2E Tests (Playwright)
+- Cover critical user flows (auth, profile editing, mini-app interactions)
+- Test across different browsers
+- Store in `tests/e2e/`
+- Run in CI/CD pipeline before deployment
+
+## Accessibility (a11y)
+
+### Requirements
+- Maintain WCAG 2.1 AA compliance
+- Ensure full keyboard navigation support
+- Provide proper ARIA labels and roles
+- Test with screen readers (NVDA, VoiceOver)
+- Maintain color contrast ratios (4.5:1 for normal text)
+- Use semantic HTML elements
+
+### Implementation
+- Leverage MUI's built-in accessibility features
+- Add focus indicators for all interactive elements
+- Provide skip navigation links
+- Include alt text for all images
+- Test with axe DevTools
+
+## Error Handling
+
+### Patterns
+- Implement error boundaries at feature and route levels
+- Show user-friendly error messages; log technical details
+- Provide retry mechanisms for failed operations
+- Use React Query or similar for automatic retry logic
+- Never expose sensitive error information to users
+
+### Supabase Errors
+- Create typed error handling utilities
+- Map Supabase error codes to user messages
+- Implement exponential backoff for retries
+- Log errors to monitoring service (e.g., Sentry)
+
+## Security Best Practices
+
+### Authentication
+- Use Supabase Auth for all authentication flows
+- Implement proper session management
+- Store tokens securely; never in localStorage
+- Add rate limiting for sensitive operations
+- Implement CSRF protection
+
+### Data Protection
+- Validate all user inputs client and server-side
+- Sanitize data before rendering (prevent XSS)
+- Use Supabase RLS (Row Level Security) policies
+- Never expose API keys or secrets in frontend code
+- Implement proper CORS configuration
+
+## Git & Development Workflow
+
+### Commit Standards
+- Use conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, etc.
+- Write descriptive commit messages
+- Keep commits atomic and focused
+- Reference issue numbers where applicable
+
+### Branch Strategy
+- `main`: production-ready code
+- `develop`: integration branch
+- `feature/*`: new features
+- `fix/*`: bug fixes
+- `chore/*`: maintenance tasks
+
+### Code Review
+- All code must be reviewed before merging
+- Run Biome.js checks locally before pushing
+- Ensure tests pass and coverage is maintained
+- Update documentation with code changes
+
+## CI/CD Pipeline
+
+### Automated Checks
+- Biome.js linting and formatting
+- TypeScript compilation
+- Unit and integration tests
+- E2E tests on critical paths
+- Bundle size analysis
+- Lighthouse performance audit
+
+### Deployment
+- Auto-deploy to staging on merge to `develop`
+- Manual promotion to production
+- Run smoke tests post-deployment
+- Implement rollback strategy
+
+## Environment Configuration
+
+### Environment Variables
+- Use `.env` files; never commit secrets
+- Prefix with `VITE_` for client-side access
+- Validate required env vars on app start
+- Use different configs for dev/staging/prod
+
+### Required Variables
+```
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_APP_ENV=
+VITE_GA_TRACKING_ID=
+```
+
+## Documentation
+
+### Code Documentation
+- Add JSDoc comments for complex functions
+- Document all custom hooks with usage examples
+- Maintain README.md in each feature directory
+- Create ADRs (Architecture Decision Records) for major decisions
+
+### Component Documentation
+- Document all components in Storybook
+- Include usage examples and prop descriptions
+- Show different states and variants
+- Document accessibility considerations
+
+## Performance Targets
+
+- **First Contentful Paint (FCP)**: < 1.5s
+- **Largest Contentful Paint (LCP)**: < 2.5s
+- **Time to Interactive (TTI)**: < 3.5s
+- **Cumulative Layout Shift (CLS)**: < 0.1
+- **First Input Delay (FID)**: < 100ms
+- **Lighthouse Score**: 95+ (all categories)
+
+## Learning Objectives
+
+As this is a learning project, prioritize:
+- Understanding over shortcuts
+- Best practices over quick solutions
+- Proper patterns over hacky fixes
+- Documentation and testing
+- Code quality and maintainability
+
+## Import Order
+
+```typescript
+// 1. React and external libraries
+import React, { useState, useEffect } from 'react';
+import { Box, Button } from '@mui/material';
+
+// 2. Internal modules
+import { UserProfile } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/services/supabase';
+
+// 3. Components
+import { Header } from '@/components/common/Header';
+import { Card } from '@/components/ui/Card';
+
+// 4. Types and constants
+import type { Props } from './types';
+import { CONSTANTS } from './constants';
+```
+
+## Common Patterns to Follow
+
+### Custom Hook Pattern
+```typescript
+export function useCustomHook() {
+  const [state, setState] = useState();
+  
+  useEffect(() => {
+    // Effect logic
+  }, []);
+  
+  return { state, setState };
+}
+```
+
+### MUI Styled Component Pattern
+```typescript
+import { styled } from '@mui/material/styles';
+import { Box } from '@mui/material';
+
+export const StyledCard = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: theme.palette.background.paper,
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(1),
+  },
+}));
+```
+
+### Error Boundary Pattern
+```typescript
+class ErrorBoundary extends React.Component {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log to service
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback />;
+    }
+    return this.props.children;
+  }
+}
+```
+
+## What to Avoid
+
+- ❌ Custom CSS files or Tailwind
+- ❌ Inline styles (use MUI's `sx` prop)
+- ❌ Any type in TypeScript
+- ❌ Prop drilling (use composition/context)
+- ❌ Large components (>200 lines)
+- ❌ Premature optimization
+- ❌ Hardcoded values (use theme tokens)
+- ❌ localStorage for sensitive data
+- ❌ Testing implementation details
+- ❌ Ignoring accessibility
+
+## Remember
+
+This is a production-grade application that doubles as a learning platform. Every decision should balance immediate functionality with long-term maintainability, performance, and educational value. Write code you'd be proud to show in an interview.
+```

@@ -1,0 +1,942 @@
+---
+alwaysApply: true
+---
+# Personal Identity Platform - Design System Rules
+
+## Design Philosophy
+
+This website is Balkrishna's digital presence - a living, breathing space that feels like visiting him in person. Every interaction should be warm, playful, memorable, and uniquely personal. The design celebrates creativity, curiosity, and human connection through high-energy visuals, surprising interactions, and adaptive personalization.
+
+**Core Principle**: "Built just for you" - The website learns, adapts, and remembers each visitor, creating an increasingly personalized experience with every visit.
+
+---
+
+## Color System
+
+### Primary Palette: Sunflower Mornings
+Our color story is inspired by bright sunflower fields at dawn - energetic, warm, optimistic, and alive.
+
+```typescript
+// Primary Colors - Sunflower Energy
+const colors = {
+  primary: {
+    sunflower: '#FFD93D',      // Main brand color - vibrant sunflower yellow
+    golden: '#FFA500',          // Golden hour orange
+    brightYellow: '#FFF176',    // Soft morning light
+    deepGold: '#F6C90E',        // Rich sunflower center
+  },
+  
+  // Secondary - Morning Sky
+  secondary: {
+    skyBlue: '#6BCB77',         // Fresh morning green-blue
+    mint: '#4D96A9',            // Cool morning breeze
+    coral: '#FF6B6B',           // Sunrise coral
+    lavender: '#A78BFA',        // Dawn lavender
+  },
+  
+  // Accent Colors - Playful Pops
+  accent: {
+    electricBlue: '#00D9FF',    // High energy highlights
+    hotPink: '#FF006E',         // Playful interactions
+    limeGreen: '#B9FF66',       // Fresh, organic
+    purple: '#8B5CF6',          // Creative, imaginative
+  },
+  
+  // Neutrals - Warm Foundation
+  neutral: {
+    cream: '#FFF9E6',           // Light mode background
+    warmGray: '#F5F1E8',        // Subtle sections
+    charcoal: '#2C2C2C',        // Text on light
+    softBlack: '#1A1A1A',       // Dark mode background
+  }
+};
+```
+
+### Theme Modes
+Implement **4 distinct theme modes** that visitors can switch between:
+
+1. **Sunflower Mode** (Default Light)
+   - Background: Cream (#FFF9E6)
+   - Primary: Sunflower yellow with golden accents
+   - Warm, energetic, morning vibes
+
+2. **Twilight Mode** (Colored Dark)
+   - Background: Deep purple-blue gradient (#1E1B4B → #312E81)
+   - Primary: Golden yellow pops against dark
+   - Magical, evening atmosphere
+
+3. **Forest Mode** (Green Dark)
+   - Background: Deep forest green (#064E3B → #1E3A2F)
+   - Primary: Bright lime and sunflower accents
+   - Natural, calming, organic
+
+4. **Midnight Mode** (Pure Dark)
+   - Background: Soft black (#1A1A1A)
+   - Primary: Electric blue and sunflower
+   - Focused, sophisticated, high-contrast
+
+**Implementation**:
+- Remember user's theme preference in their profile
+- Smooth theme transitions with color interpolation
+- Each theme has unique accent color combinations
+- Theme selector as a playful, animated widget
+
+---
+
+## Typography System
+
+### Font Families
+
+```typescript
+const typography = {
+  // Headings - Bold, Geometric, Attention-Grabbing
+  heading: {
+    family: "'Outfit', 'Poppins', sans-serif",  // Geometric, modern, rounded
+    weights: [700, 800, 900],
+    characteristics: "Bold, geometric, highly readable",
+  },
+  
+  // Body - Rounded, Friendly, Comfortable
+  body: {
+    family: "'Inter', 'DM Sans', sans-serif",  // Rounded, clean, versatile
+    weights: [400, 500, 600],
+    characteristics: "Rounded, approachable, excellent readability",
+  },
+  
+  // Accent - Playful, Unique Moments
+  accent: {
+    family: "'Space Grotesk', 'Darker Grotesque', sans-serif",  // Quirky, geometric
+    weights: [500, 700],
+    usage: "Pull quotes, callouts, special emphasis",
+  },
+  
+  // Code/Mono - Technical Content
+  mono: {
+    family: "'JetBrains Mono', 'Fira Code', monospace",
+    weights: [400, 600],
+    usage: "Code blocks, technical details, mini-apps",
+  }
+};
+```
+
+### Type Scale - Bold & Dramatic
+
+```typescript
+const typeScale = {
+  // Display - Hero Moments
+  display1: { size: '4.5rem', weight: 900, lineHeight: 1.1 },  // 72px
+  display2: { size: '3.5rem', weight: 800, lineHeight: 1.15 }, // 56px
+  
+  // Headings - Section Dividers
+  h1: { size: '3rem', weight: 800, lineHeight: 1.2 },    // 48px
+  h2: { size: '2.25rem', weight: 700, lineHeight: 1.25 }, // 36px
+  h3: { size: '1.75rem', weight: 700, lineHeight: 1.3 },  // 28px
+  h4: { size: '1.5rem', weight: 600, lineHeight: 1.35 },  // 24px
+  
+  // Body - Comfortable Reading
+  body1: { size: '1.125rem', weight: 400, lineHeight: 1.7 }, // 18px - main content
+  body2: { size: '1rem', weight: 400, lineHeight: 1.6 },     // 16px - secondary
+  
+  // Special
+  pullQuote: { size: '2rem', weight: 700, lineHeight: 1.3, style: 'italic' },
+  caption: { size: '0.875rem', weight: 500, lineHeight: 1.5 },
+};
+```
+
+### Typography Treatments
+
+**Pull Quotes**: 
+- Large, italic, accent font
+- Bright accent color or gradient
+- Decorative quotation marks as pseudo-elements
+- Slight rotation (-2deg to 2deg) for organic feel
+
+**Callouts**:
+- Border-left accent (4px thick, primary color)
+- Light background fill with subtle pattern
+- Icon prefix for visual interest
+- Smooth hover lift effect
+
+**Text Highlights**:
+- Animated underlines on hover (draw in effect)
+- Gradient text for special emphasis
+- Background highlight with "marker" effect
+- Inline badges for tags/categories
+
+---
+
+## Layout & Grid System
+
+### Asymmetric Layouts
+
+Break free from centered, symmetric designs. Embrace creative, artistic layouts that feel dynamic and alive.
+
+**Principles**:
+- **No perfect centering** - offset elements for visual interest
+- **Overlapping sections** - layers create depth
+- **Diagonal elements** - 3-7 degree rotations for energy
+- **Broken grids** - elements that break out of containers
+- **Varying rhythms** - alternate dense and spacious sections
+
+### Grid Specifications
+
+```typescript
+const grid = {
+  // Base grid - 12 columns with creative breaks
+  columns: 12,
+  gutter: '2rem',      // 32px
+  margin: '5vw',       // Responsive outer margins
+  
+  // Asymmetric patterns
+  patterns: {
+    hero: '7-5',           // 7 cols content, 5 cols visual
+    feature: '4-8',        // Alternating emphasis
+    gallery: 'masonry',    // Irregular heights
+    content: '8-4',        // Wide content, narrow sidebar
+  },
+  
+  // Breakpoints
+  breakpoints: {
+    xs: '0px',
+    sm: '600px',
+    md: '900px',
+    lg: '1200px',
+    xl: '1536px',
+  }
+};
+```
+
+### Section Layouts
+
+**Hero Section**:
+- Full viewport height
+- Asymmetric split (60/40 or 70/30)
+- Animated 3D element on one side
+- Text content with stagger animation
+- Floating particles or shapes
+- Custom cursor interactions
+
+**Content Sections**:
+- Alternating layouts (left-heavy, right-heavy)
+- Diagonal section dividers (SVG paths)
+- Overlapping images that break boundaries
+- Floating elements that follow scroll
+- Background patterns that shift with theme
+
+**Mini-App Sections**:
+- Cards with depth (shadows, transforms)
+- Hover lift effects with tilt
+- Preview animations on hover
+- Launch animations when clicked
+- Each app has unique color accent
+
+---
+
+## Animation & Motion Language
+
+### Principles: High-Energy & Playful
+
+All animations should feel **alive, responsive, and surprising** while maintaining smooth 60fps performance.
+
+### Animation Library
+
+```typescript
+const animations = {
+  // Timing Functions - Playful Easings
+  easings: {
+    bouncy: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',     // Overshoot
+    smooth: 'cubic-bezier(0.4, 0.0, 0.2, 1)',            // Material smooth
+    snappy: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',      // Quick response
+    elastic: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',  // Elastic bounce
+  },
+  
+  // Durations
+  durations: {
+    instant: '150ms',
+    quick: '250ms',
+    normal: '400ms',
+    slow: '600ms',
+    dramatic: '1000ms',
+  }
+};
+```
+
+### Key Animation Patterns
+
+**Page Load Sequence**:
+1. Hero text stagger-in (letters or words) - 50ms delay between each
+2. 3D element fades in with rotation
+3. Navigation slides in from top
+4. Particles/shapes animate into position
+5. Scroll indicator bounces
+
+**Scroll-Triggered Animations**:
+- **Fade + Slide**: Elements enter from side/bottom
+- **Scale In**: Elements grow from 0.8 to 1 scale
+- **Reveal**: Clip-path reveal effect (left to right)
+- **Parallax**: Background elements move slower than foreground
+- **Rotation**: Cards tilt into view
+- **Stagger**: Multiple elements cascade in
+
+**Hover Interactions**:
+- **Card Lift**: Transform translateY(-8px) + shadow increase
+- **Tilt Effect**: 3D rotate on cursor position
+- **Glow**: Box-shadow with primary color
+- **Grow**: Scale(1.05) with smooth bounce
+- **Color Shift**: Gradient position change
+- **Cursor Follow**: Element slightly follows cursor
+
+**Click/Tap Feedback**:
+- **Ripple Effect**: Expanding circle from click point
+- **Bounce**: Quick scale down then overshoot up
+- **Confetti**: Particle burst on success actions
+- **Shake**: Gentle shake for errors
+- **Morph**: Shape transforms (button → loading → success)
+
+**3D Elements**:
+- Use Three.js for complex 3D scenes in hero
+- Floating geometric shapes that respond to mouse
+- Parallax depth on scroll
+- Interactive 3D objects that rotate on drag
+- Lighting that changes with theme
+- Performance: GPU acceleration, requestAnimationFrame
+
+**Micro-interactions**:
+- **Toggle switches**: Smooth slide with color change
+- **Checkboxes**: Checkmark draws in
+- **Loading states**: Playful spinners (not boring circles)
+- **Progress bars**: Animated gradient fill
+- **Notifications**: Slide in from corner with bounce
+- **Tooltips**: Scale in with arrow point
+
+---
+
+## Custom Cursor System
+
+Create a **custom cursor experience** that makes the site feel alive and responsive.
+
+### Cursor States
+
+```typescript
+const cursorStates = {
+  default: {
+    // Small dot that follows cursor
+    size: '8px',
+    color: 'primary.sunflower',
+    blend: 'difference',  // Inverts on content
+  },
+  
+  hover: {
+    // Grows when hovering interactive elements
+    size: '40px',
+    opacity: 0.2,
+    border: '2px solid',
+    text: 'Click',  // Shows action hint
+  },
+  
+  active: {
+    // Shrinks when clicking
+    size: '4px',
+    animation: 'pulse',
+  },
+  
+  dragging: {
+    // Changes when dragging elements
+    icon: 'grab',
+    size: '32px',
+  },
+  
+  loading: {
+    // Animated spinner cursor
+    animation: 'rotate',
+  }
+};
+```
+
+**Custom Cursor Features**:
+- Smooth follow with slight delay (laggy mouse effect)
+- Blend mode changes based on background
+- Shows contextual hints ("Click", "Drag", "Explore")
+- Particles trail behind cursor on movement
+- Different styles for different sections
+- Disable on mobile/touch devices
+
+---
+
+## Component Design Patterns
+
+### Cards - Depth & Playfulness
+
+```typescript
+const cardStyles = {
+  // Base card with depth
+  base: {
+    background: 'gradient or solid',
+    borderRadius: '24px',          // Rounded, friendly
+    padding: '2rem',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+    transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+  },
+  
+  // Hover state
+  hover: {
+    transform: 'translateY(-12px) rotate(1deg)',  // Lift + slight tilt
+    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+    // Border glow with primary color
+  },
+  
+  // Variants
+  variants: {
+    elevated: '3D shadow stack effect',
+    outlined: 'Thick border, no shadow',
+    gradient: 'Animated gradient background',
+    glass: 'Frosted glass blur effect',
+  }
+};
+```
+
+### Buttons - Chunky & Satisfying
+
+```typescript
+const buttonStyles = {
+  // Primary action button
+  primary: {
+    height: '56px',                  // Larger, easier to hit
+    borderRadius: '16px',            // Rounded corners
+    fontSize: '1.125rem',
+    fontWeight: 600,
+    padding: '0 2.5rem',
+    background: 'linear-gradient(135deg, sunflower, golden)',
+    boxShadow: '0 4px 16px rgba(255, 217, 61, 0.4)',
+    
+    // Hover
+    hover: {
+      transform: 'translateY(-2px) scale(1.02)',
+      boxShadow: '0 8px 24px rgba(255, 217, 61, 0.6)',
+    },
+    
+    // Active
+    active: {
+      transform: 'translateY(0) scale(0.98)',
+    }
+  },
+  
+  // Icon buttons
+  icon: {
+    size: '48px',
+    borderRadius: '50%',
+    hover: 'rotate(15deg)',
+  }
+};
+```
+
+### Inputs - Friendly & Clear
+
+```typescript
+const inputStyles = {
+  textField: {
+    height: '56px',
+    borderRadius: '12px',
+    fontSize: '1rem',
+    border: '2px solid',
+    borderColor: 'neutral.warmGray',
+    
+    // Focus state
+    focus: {
+      borderColor: 'primary.sunflower',
+      boxShadow: '0 0 0 4px rgba(255, 217, 61, 0.1)',
+      // Label animates up and shrinks
+    },
+    
+    // Error state
+    error: {
+      borderColor: 'accent.coral',
+      animation: 'gentle shake',
+    }
+  }
+};
+```
+
+### Navigation - Creative & Experimental
+
+**Design Options** (pick based on section):
+
+1. **Floating Navigation**:
+   - Fixed, centered at top
+   - Frosted glass background
+   - Morphs shape on scroll
+   - Items highlight on hover with underline animation
+
+2. **Radial Menu**:
+   - Circular menu that expands from corner
+   - Items arranged in circle
+   - Click center to open/close with rotation
+
+3. **Side Drawer** (Mobile):
+   - Full-screen overlay with blur
+   - Menu items stagger in
+   - Animated background shapes
+   - Gesture to dismiss
+
+**Navigation Features**:
+- Active page indicator (animated line or glow)
+- Smooth scroll to sections
+- Progress indicator for current section
+- Breadcrumbs for deep navigation
+- Quick-access favorites
+
+---
+
+## Personalization System
+
+### Learning & Adaptation
+
+The website should **remember and adapt** to each visitor:
+
+```typescript
+const personalizationData = {
+  // Track user preferences
+  preferences: {
+    theme: 'sunflower | twilight | forest | midnight',
+    reducedMotion: boolean,
+    fontSize: number,
+    favoriteApps: string[],
+    visitedSections: string[],
+  },
+  
+  // Interaction history
+  interactions: {
+    clickPatterns: Map<string, number>,
+    timeSpent: Map<string, number>,
+    scrollDepth: Map<string, number>,
+    miniAppUsage: Map<string, { count: number, lastUsed: Date }>,
+  },
+  
+  // Personalized content
+  recommendations: {
+    suggestedApps: string[],      // Based on usage patterns
+    suggestedContent: string[],    // Based on interests
+    quickAccess: string[],         // Most used features
+  }
+};
+```
+
+### Adaptive UI Features
+
+**First Visit** (Anonymous):
+- Welcome animation sequence
+- Interactive onboarding tutorial
+- Gentle prompts to explore
+- "Sign in to remember your preferences"
+
+**Returning Visitor** (Anonymous):
+- "Welcome back!" message
+- Show previously explored sections
+- Suggest unexplored content
+- Prompt to create account to save progress
+
+**Logged-In User**:
+- Personal greeting with name
+- Dashboard showing activity
+- Quick access to favorite apps
+- Personalized recommendations
+- Custom theme remembered
+- Progress tracking for interactive elements
+
+### Gamification Elements
+
+```typescript
+const gamification = {
+  // Achievement system
+  achievements: [
+    'First Visit',
+    'Explorer (visited all sections)',
+    'Mini-App Master (tried 5 apps)',
+    'Night Owl (used midnight theme)',
+    'Frequent Visitor (10+ visits)',
+    'Deep Diver (spent 30+ min)',
+  ],
+  
+  // Progress indicators
+  progress: {
+    profileCompletion: number,      // 0-100%
+    sectionsExplored: number,       // X of Y
+    appsDiscovered: number,         // X of Y
+  },
+  
+  // Visual feedback
+  rewards: {
+    confetti: 'On achievement unlock',
+    animations: 'Special effects',
+    badges: 'Visual indicators',
+    unlockables: 'Hidden features or themes',
+  }
+};
+```
+
+### Personal Touches
+
+**Throughout the site**:
+- Handwritten-style annotations (as if Balkrishna is explaining)
+- Personal photos or sketches
+- Voice notes (optional audio messages)
+- Behind-the-scenes content
+- Work-in-progress notes
+- Easter eggs (hidden interactions)
+- Personal quotes or thoughts
+- "Built with" section showing tools used
+
+**Conversational UI**:
+- Error messages with humor
+- Loading states with personality ("Fetching the good stuff...")
+- Empty states with encouragement
+- Success messages that celebrate
+- 404 page that's playful, not sad
+
+---
+
+## Responsive Design Strategy
+
+### Mobile-First Approach
+
+Design for mobile, enhance for desktop.
+
+```typescript
+const responsivePatterns = {
+  // Mobile (320px - 600px)
+  mobile: {
+    navigation: 'Bottom tab bar or hamburger',
+    typography: 'Scale down 20%',
+    spacing: 'Reduce to 1rem gutter',
+    interactions: 'Touch-friendly (44px minimum)',
+    animations: 'Reduced, respect prefers-reduced-motion',
+    layout: 'Single column',
+  },
+  
+  // Tablet (600px - 900px)
+  tablet: {
+    navigation: 'Top bar with icons',
+    layout: 'Two columns where appropriate',
+    animations: 'Full animations',
+    sideDrawer: 'Consider side navigation',
+  },
+  
+  // Desktop (900px+)
+  desktop: {
+    navigation: 'Full menu with dropdowns',
+    layout: 'Asymmetric multi-column',
+    animations: 'All effects including 3D',
+    cursor: 'Custom cursor enabled',
+    hover: 'All hover effects active',
+  },
+  
+  // Large Desktop (1536px+)
+  xl: {
+    layout: 'Max-width with artistic margins',
+    typography: 'Scale up for readability',
+    spacing: 'Extra generous',
+  }
+};
+```
+
+---
+
+## Section-Specific Design
+
+### Hero Section - "The Welcome"
+
+**Goals**: Immediate wow factor, establish personality, invite exploration
+
+**Elements**:
+- Massive, animated heading with gradient text
+- 3D animated object (floating geometric shape, interactive scene)
+- Particle system that responds to mouse
+- Scroll indicator (animated arrow or text)
+- Theme switcher (prominent, animated)
+- Brief tagline with typewriter effect
+- Call-to-action button (explore, sign in)
+
+**Interaction**:
+- Mouse movement affects 3D element rotation
+- Cursor leaves trail of particles
+- Click anywhere for playful response
+- Auto-play ambient animation
+
+### About Section - "Get to Know Me"
+
+**Layout**: Timeline or story-driven scroll
+
+**Elements**:
+- Personal photo with hover effect (switch between photos)
+- Interactive timeline of journey
+- Skills shown as animated progress bars or icons
+- Values/philosophy as pull quotes
+- Fun facts as flip cards
+- "Currently learning" section
+- Downloadable resume with custom design
+
+### Mini-Apps Gallery - "Playground"
+
+**Layout**: Masonry grid or carousel
+
+**Card Design**:
+- Preview animation/GIF on hover
+- App icon with glow effect
+- Brief description
+- "Try it" button
+- Usage count or popularity indicator
+- "New" badge for recent additions
+
+**Categories**:
+- Visual filters/badges
+- Smooth transitions between categories
+- Search with fuzzy matching
+- Sort by: newest, popular, random
+
+### Connection Hub - "Let's Talk"
+
+**Design**: Warm, inviting, multiple options
+
+**Elements**:
+- Contact form with personality (labeled "Send a message")
+- Social media icons as animated buttons
+- Calendar booking widget (if applicable)
+- Newsletter signup with benefits
+- Live status indicator ("Usually responds within 24h")
+- Response expectation setting
+
+**Tone**: Friendly, approachable, clear
+
+### Blog/Content Section - "Thoughts & Ideas"
+
+**Layout**: Card grid with featured posts
+
+**Card Design**:
+- Large featured image
+- Reading time estimate
+- Date and category
+- Hover: image zoom + overlay
+- Tag system with colors
+- "Continue reading" vs "Read more"
+
+**Reading Experience**:
+- Wide margins for comfortable reading
+- Generous line height
+- Pull quotes styled dramatically
+- Code blocks with syntax highlighting
+- Images with captions
+- Table of contents for long posts
+- Progress indicator while reading
+
+---
+
+## Accessibility Considerations
+
+While maintaining high energy and creativity, ensure **everyone can access and enjoy**:
+
+### Core Requirements
+
+- **Keyboard Navigation**: All interactive elements accessible via keyboard
+- **Focus Indicators**: Highly visible focus states (not just outline)
+- **Color Contrast**: Meet WCAG AA standards (4.5:1 for text)
+- **Alt Text**: Descriptive alt text for all images
+- **ARIA Labels**: Proper labels for interactive elements
+- **Reduced Motion**: Respect `prefers-reduced-motion` media query
+- **Screen Readers**: Test with NVDA/VoiceOver
+- **Skip Links**: "Skip to content" for keyboard users
+
+### Accessible Animations
+
+```typescript
+const accessibleAnimations = {
+  // Check user preference
+  respectReducedMotion: true,
+  
+  // Reduced motion fallbacks
+  reducedMotionFallbacks: {
+    scrollAnimations: 'Instant visibility',
+    parallax: 'Static positioning',
+    particles: 'Remove or static',
+    rotations: 'Simple fades',
+    hovers: 'Color/shadow only',
+  },
+  
+  // Still maintain personality
+  alternativeEffects: {
+    useTransitions: true,          // Instead of transforms
+    useFades: true,                // Instead of slides
+    useColorChanges: true,         // Instead of rotations
+    keepSoundEffects: false,       // Audio alternatives
+  }
+};
+```
+
+---
+
+## Performance Optimization
+
+Maintain 60fps and fast load times despite high-energy design:
+
+### Critical Optimizations
+
+```typescript
+const performanceStrategy = {
+  // Code splitting
+  lazyLoad: {
+    routes: 'All routes lazy loaded',
+    miniApps: 'Load on demand',
+    heavyComponents: '3D scenes, charts, etc.',
+    images: 'Intersection observer',
+  },
+  
+  // Animation performance
+  animations: {
+    gpuAcceleration: 'transform, opacity only',
+    willChange: 'Use sparingly, remove after',
+    requestAnimationFrame: 'For all JS animations',
+    cssAnimations: 'Prefer over JS where possible',
+  },
+  
+  // Asset optimization
+  assets: {
+    images: 'WebP with AVIF, lazy load',
+    fonts: 'Subset fonts, preload critical',
+    videos: 'Lazy load, mobile alternatives',
+    svgs: 'Inline critical, load others',
+  },
+  
+  // Bundle size
+  bundling: {
+    initialBundle: '< 200KB gzipped',
+    chunkSplitting: 'Per route + shared chunks',
+    treeshaking: 'Remove unused code',
+    minification: 'Aggressive minification',
+  }
+};
+```
+
+---
+
+## Theme Implementation Example
+
+```typescript
+// MUI Theme Configuration
+import { createTheme } from '@mui/material/styles';
+
+const sunflowerTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#FFD93D',
+      light: '#FFF176',
+      dark: '#F6C90E',
+      contrastText: '#2C2C2C',
+    },
+    secondary: {
+      main: '#6BCB77',
+      light: '#A8E6CF',
+      dark: '#4A9B5F',
+    },
+    background: {
+      default: '#FFF9E6',
+      paper: '#FFFFFF',
+    },
+    text: {
+      primary: '#2C2C2C',
+      secondary: '#666666',
+    },
+  },
+  
+  typography: {
+    fontFamily: "'Inter', sans-serif",
+    h1: {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '3rem',
+      fontWeight: 800,
+      lineHeight: 1.2,
+    },
+    // ... other variants
+  },
+  
+  shape: {
+    borderRadius: 16,  // Rounded, friendly
+  },
+  
+  spacing: 8,  // Base spacing unit
+  
+  shadows: [
+    'none',
+    '0 2px 8px rgba(0,0,0,0.05)',
+    '0 4px 16px rgba(0,0,0,0.08)',
+    '0 8px 32px rgba(0,0,0,0.12)',
+    // ... custom shadow scale
+  ],
+  
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          textTransform: 'none',
+          fontSize: '1.125rem',
+          padding: '12px 32px',
+          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+          },
+        },
+      },
+    },
+    // ... other component overrides
+  },
+});
+```
+
+---
+
+## Design Checklist
+
+Before launching any new section or component:
+
+- [ ] **Color**: Uses theme colors, works in all 4 theme modes
+- [ ] **Typography**: Follows type scale, readable contrast
+- [ ] **Animation**: Smooth, purposeful, respects reduced-motion
+- [ ] **Layout**: Responsive across all breakpoints
+- [ ] **Interaction**: Clear hover/focus/active states
+- [ ] **Accessibility**: Keyboard accessible, proper ARIA labels
+- [ ] **Performance**: No jank, optimized assets
+- [ ] **Personalization**: Tracks interactions if relevant
+- [ ] **Mobile**: Touch-friendly, optimized for small screens
+- [ ] **Personality**: Feels unique, playful, and personal
+
+---
+
+## Voice & Tone Examples
+
+**Error Messages**:
+- ❌ "Error 404"
+- ✅ "Oops! This page is playing hide and seek 🙈"
+
+**Loading States**:
+- ❌ "Loading..."
+- ✅ "Brewing something special... ☕"
+
+**Success Messages**:
+- ❌ "Success"
+- ✅ "Woohoo! That worked perfectly! 🎉"
+
+**Empty States**:
+- ❌ "No items found"
+- ✅ "Nothing here yet, but that's about to change! ✨"
+
+**Call to Actions**:
+- ❌ "Submit"
+- ✅ "Let's do this!" or "Send it! 🚀"
+
+---
+
+## Remember
+
+This website is **alive, personal, and memorable**. Every pixel should spark joy, invite exploration, and make visitors feel like they're getting to know Balkrishna personally. Be bold, be playful, be surprising - but never sacrifice usability or accessibility for aesthetics. 
+
+The best design is one that makes people smile while they use it. 🌻✨
