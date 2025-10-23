@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+---
+# Security Best Practices Cursor Rules
+
+# 1. General Principles
+- Always validate and sanitize all user inputs, including data passed to third-party libraries such as MUI components, Zustand stores, and React Hook Form fields.
+- Never commit secrets, API keys, or access tokens. Instead, store all secrets in environment variables managed outside your version control system.
+- Adhere strictly to the principle of least privilege when configuring Supabase, Axios requests, and any service credentials.
+
+# 2. Dependency & Package Security
+- Only import packages explicitly defined in `package.json`. Do not use dynamic imports from untrusted sources.
+- Update dependencies regularly. Run `npm audit` and address all vulnerabilities rated moderate or higher before releases.
+- For TypeScript projects, always use type-safe libraries; do not bypass type checks (e.g., avoid using `any` except in justifiable edge-cases).
+- Use Biome and lint-staged for pre-commit security and code quality checks; do not bypass or disable these checks in CI/CD or local workflows.
+
+# 3. Secure Use of Key Libraries
+## MUI and 3rd-Party UI:
+- Escape or sanitize all text/HTML displayed in `@mui/material` or other UI elements to prevent XSS.
+- Avoid using `dangerouslySetInnerHTML` except with controlled, sanitized markdown rendering (e.g., via react-markdown with remark-gfm).
+
+## State Management (Zustand, Immer):
+- Never store secrets, access tokens, or sensitive user data in global state or client-persistent stores (e.g., Zustand).
+- Avoid mutating state directly; always use immutable patterns with Immer or spread operators.
+
+## Network & Data (Axios, React Query, Supabase):
+- Enforce HTTPS for all remote connections.
+- Use Axios and `@tanstack/react-query` interceptors to globally handle authentication errors and sanitize response data.
+- Validate all data received from Supabase and external APIs before use or rendering.
+
+## Forms (React Hook Form, Zod):
+- Use `zod` schemas and `@hookform/resolvers` to strictly validate all server-bound data.
+- Reject submissions exceeding defined length, type, or schema constraints.
+
+# 4. Client-Side Security
+- Use CSP headers (via Vite or server config) to restrict allowable script and resource origins.
+- Don’t expose sensitive project metadata (author, engine, etc.) in frontend bundles or Storybook deployments.
+- Ensure all OAuth or third-party authentication flows (Supabase) are performed using secure and verified redirect URIs.
+
+# 5. Browser & DOM
+- Never directly manipulate the DOM outside React (e.g., via refs) except for accessibility, animation, or controlled imperative APIs (framer-motion).
+- Do not store or expose PII in `localStorage`, `sessionStorage`, or cookies without encryption and a defined retention policy.
+
+# 6. Code Quality & Tooling
+- Run all code through Biome pre-commit hooks and ensure no lint or test errors before deploying or merging PRs.
+- All Playwright, Vitest, and Storybook tests must avoid hardcoded credentials or clear-text secrets.
+- Ensure source map files are not publicly deployed.
+- For Markdown and code rendering (react-markdown, react-syntax-highlighter), enable link target sanitization and never render user-submitted code unescaped.
+
+# 7. Miscellaneous
+- Review and restrict permissions on all npm scripts, especially those in build, test, and deploy workflows.
+- For analytics (react-ga4, @vercel/analytics), anonymize IPs and don’t log user-identifying information.
+
+# 8. Continuous Monitoring
+- Enable automated dependency checks and vulnerability monitoring for both dependencies and devDependencies.
+- Audit and document all significant changes to authentication, authorization, or data access logic.
+
+---
+
+Summary: Follow these rules to minimize attack surface, guard user privacy, and meet professional security compliance standards across all code and workflows associated with your current package.json and stack.

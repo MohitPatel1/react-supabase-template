@@ -1,0 +1,139 @@
+---
+alwaysApply: true
+---
+🎯 Complete Package.json Example
+Here's a comprehensive `package.json` with all recommended libraries:
+
+📋 Installation Strategy
+Phased Installation Approach
+Given the extensive library list, here's a recommended installation strategy:
+Phase 1: Core Foundation (Start here)
+# Core React & Build Tools
+npm install react react-dom
+npm install -D vite @vitejs/plugin-react typescript @types/react @types/react-dom vite-tsconfig-paths
+
+# UI Framework
+npm install @mui/material @mui/icons-material @emotion/react @emotion/styled
+
+# Routing & State
+npm install react-router-dom zustand
+
+# Code Quality
+npm install -D @biomejs/biome husky lint-staged
+Phase 2: Essential Features (Week 1-2)
+# Forms & Validation
+npm install react-hook-form zod @hookform/resolvers
+
+# Data Fetching
+npm install @tanstack/react-query @tanstack/react-query-devtools axios
+
+# Testing
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event @playwright/test
+
+# Notifications
+npm install notistack
+Phase 3: Enhanced UX (Week 2-3)
+# Animations
+npm install framer-motion react-intersection-observer
+
+# Performance
+npm install react-window react-lazy-load-image-component web-vitals
+
+# Utilities
+npm install dayjs lodash-es clsx uuid react-use react-error-boundary
+Phase 4: Content & Media (Week 3-4)
+# Markdown & Syntax
+npm install react-markdown react-syntax-highlighter remark-gfm
+npm install -D @types/react-syntax-highlighter
+
+# Media Handling
+npm install react-dropzone react-slick slick-carousel
+npm install -D @types/react-slick
+
+# SEO
+npm install react-helmet-async
+Phase 5: Production Features (Week 4+)
+# Authentication (choose one)
+npm install @supabase/supabase-js
+# OR
+npm install firebase
+
+# Monitoring & Analytics
+npm install @sentry/react react-ga4
+
+# Advanced Features
+npm install recharts fuse.js react-hotkeys-hook react-confetti
+
+# PWA
+npm install -D vite-plugin-pwa
+
+# Build Optimization
+npm install -D rollup-plugin-visualizer vite-plugin-compression
+Phase 6: Optional Enhancement (As needed)
+# Storybook
+npx storybook@latest init
+
+# i18n (if needed)
+npm install react-i18next i18next
+
+# Additional Analytics
+npm install @vercel/analytics  # If using Vercel
+🎓 Learning Path Recommendations
+As you're using this project to learn React, here's a recommended order for exploring these libraries:
+Week 1-2: React Fundamentals
+Master React hooks with `react-use` examples
+Understand component composition with MUI
+Learn routing with `react-router-dom`
+Practice form handling with `react-hook-form` + `zod`
+Week 3-4: State & Data Management
+Implement global state with `zustand`
+Master data fetching with `@tanstack/react-query`
+Understand caching strategies
+Implement optimistic updates
+Week 5-6: Performance Optimization
+Profile with React DevTools
+Implement virtualization with `react-window`
+Add memoization strategically
+Optimize images with lazy loading
+Measure with `web-vitals`
+Week 7-8: Testing & Quality
+Write component tests with Testing Library
+Create E2E tests with Playwright
+Set up CI/CD pipeline
+Implement error boundaries and monitoring
+Week 9-10: Advanced Features
+Add animations with `framer-motion`
+Implement advanced UI patterns
+Set up analytics and monitoring
+Optimize bundle size
+🚀 Final Recommendations
+Must-Have Libraries (Non-negotiable)
+vite - Build tool
+typescript - Type safety
+@mui/material - UI framework
+react-router-dom - Routing
+zustand - State management
+@tanstack/react-query - Data fetching
+react-hook-form + zod - Forms
+vitest + @testing-library/react - Testing
+@playwright/test - E2E testing
+@biomejs/biome - Code quality
+Highly Recommended (Strong value)
+framer-motion - Animations
+react-window - List virtualization
+notistack - Notifications
+web-vitals - Performance monitoring
+react-markdown - Content rendering
+@sentry/react - Error tracking
+react-helmet-async - SEO
+react-use - Utility hooks
+Nice to Have (Adds polish)
+react-slick - Carousels
+recharts - Data visualization
+fuse.js - Search
+react-confetti - Delight moments
+vite-plugin-pwa - PWA features
+Optional (Use when needed)
+@storybook/react - Component documentation
+react-i18next - Internationalization
+@auth0/auth0-react - Enterprise auth

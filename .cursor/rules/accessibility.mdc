@@ -1,0 +1,1915 @@
+---
+alwaysApply: true
+---
+# Cursor Coding Rules: Accessibility (A11y) Best Practices
+
+## Project Context
+React 18 + TypeScript + MUI 6 + Vite  
+Testing: Vitest, Playwright, Storybook with a11y addon  
+State: Zustand, TanStack Query  
+Forms: React Hook Form + Zod  
+
+---
+
+## 1. Semantic HTML & ARIA Fundamentals
+
+### Core Principles
+- **Semantic First**: Use native HTML elements (`<button>`, `<nav>`, `<main>`, `<header>`, `<footer>`, `<section>`, `<article>`, `<aside>`) before reaching for ARIA
+- **ARIA as Enhancement**: Only add ARIA when native semantics are insufficient
+- **No ARIA is Better than Bad ARIA**: Incorrect ARIA can break accessibility worse than no ARIA
+
+### React/MUI Implementation
+// ✅ GOOD: Semantic HTML with MUI
+import { Box } from '@mui/material';
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Box component="div" sx={{ display: 'flex' }}>
+      <Box component="nav" aria-label="Main navigation">
+        {/* Navigation content */}
+      </Box>
+      <Box component="main" id="main-content">
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+// ❌ BAD: Generic divs everywhere
+function BadLayout({ children }) {
+  return (
+    <div className="layout">
+      <div className="sidebar">{/* ... */}</div>
+      <div className="content">{children}</div>
+    </div>
+  );
+}
+
+### ARIA Guidelines
+- Use `aria-label` for elements without visible text
+- Use `aria-labelledby` to reference existing visible labels
+- Use `aria-describedby` for additional context/help text
+- Use `aria-live="polite"` or `"assertive"` for dynamic content updates
+- Use `aria-hidden="true"` only for purely decorative elements
+
+---
+
+## 2. Focus Management & Keyboard Navigation
+
+### Universal Requirements
+- **All interactive elements** must be keyboard accessible (Tab, Enter, Space, Arrow keys)
+- **Focus order** must be logical and match visual layout
+- **Focus indicators** must be visible (never `outline: none` without replacement)
+- **Focus trapping** required in modals/dialogs
+
+### React Router Integration
+// ✅ Focus management on route change
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+
+function PageWrapper({ title, children }: { title: string; children: React.ReactNode }) {
+  const mainRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Move focus to main content on route change
+    mainRef.current?.focus();
+  }, [location.pathname]);
+
+  return (
+    <main ref={mainRef} tabIndex={-1} style={{ outline: 'none' }}>
+      <h1>{title}</h1>
+      {children}
+    </main>
+  );
+}
+
+### MUI Dialog/Modal Focus
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+
+function AccessibleDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      aria-labelledby="dialog-title"
+      aria-describedby="dialog-description"
+      // MUI handles focus trap automatically
+    >
+      <DialogTitle id="dialog-title">Confirm Action</DialogTitle>
+      <DialogContent id="dialog-description">
+        Are you sure you want to proceed?
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} variant="contained" autoFocus>
+          Confirm
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+### Custom Keyboard Handlers with react-hotkeys-hook
+import { useHotkeys } from 'react-hotkeys-hook';
+
+function SearchBar() {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Global shortcut to focus search
+  useHotkeys('ctrl+k, cmd+k', (e) => {
+    e.preventDefault();
+    inputRef.current?.focus();
+  }, { enableOnFormTags: false });
+
+  return (
+    <input
+      ref={inputRef}
+      type="search"
+      aria-label="Search"
+      placeholder="Search... (Ctrl+K)"
+    />
+  );
+}
+
+### Focus-Visible Styling
+// MUI theme configuration
+import { createTheme } from '@mui/material/styles';
+
+const theme = createTheme({
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          '&:focus-visible': {
+            outline: '3px solid',
+            outlineColor: 'primary.main',
+            outlineOffset: '2px',
+          },
+        },
+      },
+    },
+  },
+});
+
+---
+
+## 3. Visual Contrast & Color
+
+### WCAG 2.1 AA Requirements
+- **Normal text**: 4.5:1 contrast ratio minimum
+- **Large text** (18pt+/14pt+ bold): 3:1 contrast ratio minimum
+- **UI components and graphics**: 3:1 contrast ratio minimum
+
+### MUI Theme Configuration
+import { createTheme, alpha } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2', // Ensure WCAG AA on white background
+      contrastText: '#ffffff',
+    },
+    error: {
+      main: '#d32f2f',
+      contrastText: '#ffffff',
+    },
+    // Define all palette colors with sufficient contrast
+  },
+  components: {
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          // Ensure chip backgrounds have sufficient contrast
+          '&.MuiChip-filled': {
+            backgroundColor: alpha('#1976d2', 0.12),
+            color: '#1976d2',
+          },
+        },
+      },
+    },
+  },
+});
+
+### Color + Icon/Text Pattern
+// ✅ GOOD: Color + icon + text
+import { CheckCircle, Error } from '@mui/icons-material';
+import { Alert } from '@mui/material';
+
+function StatusMessage({ type, message }: { type: 'success' | 'error'; message: string }) {
+  return (
+    <Alert
+      severity={type}
+      icon={type === 'success' ? <CheckCircle /> : <Error />}
+    >
+      {message}
+    </Alert>
+  );
+}
+
+// ❌ BAD: Color only
+function BadStatus({ isSuccess }: { isSuccess: boolean }) {
+  return (
+    <div style={{ color: isSuccess ? 'green' : 'red' }}>
+      Status updated
+    </div>
+  );
+}
+
+### Dark Mode Support
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { useMemo } from 'react';
+import { create } from 'zustand';
+
+interface ThemeStore {
+  mode: 'light' | 'dark';
+  toggleMode: () => void;
+}
+
+export const useThemeStore = create<ThemeStore>((set) => ({
+  mode: 'light',
+  toggleMode: () => set((state) => ({ mode: state.mode === 'light' ? 'dark' : 'light' })),
+}));
+
+function App() {
+  const mode = useThemeStore((state) => state.mode);
+  
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+          // Define both light and dark palettes with WCAG compliance
+        },
+      }),
+    [mode]
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {/* App content */}
+    </ThemeProvider>
+  );
+}
+
+---
+
+## 4. Forms & Inputs (React Hook Form + Zod)
+
+### Form Field Requirements
+- Every input must have an associated `<label>`
+- Error messages must be programmatically associated
+- Use `aria-invalid` and `aria-describedby` for validation states
+- Group related fields with `<fieldset>` and `<legend>`
+
+### React Hook Form Implementation
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { TextField, FormHelperText, FormControl, FormLabel } from '@mui/material';
+
+const schema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+type FormData = z.infer<typeof schema>;
+
+function AccessibleForm() {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = (data: FormData) => console.log(data);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Email Address"
+            type="email"
+            fullWidth
+            required
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            inputProps={{
+              'aria-invalid': !!errors.email,
+              'aria-describedby': errors.email ? 'email-error' : undefined,
+            }}
+            FormHelperTextProps={{
+              id: 'email-error',
+            }}
+          />
+        )}
+      />
+      
+      <Controller
+        name="password"
+        control={control}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="Password"
+            type="password"
+            fullWidth
+            required
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            inputProps={{
+              'aria-invalid': !!errors.password,
+              'aria-describedby': errors.password ? 'password-error' : undefined,
+            }}
+            FormHelperTextProps={{
+              id: 'password-error',
+            }}
+          />
+        )}
+      />
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+### Dynamic Validation Feedback
+import { useEffect, useRef } from 'react';
+import { Alert } from '@mui/material';
+
+function LiveValidationFeedback({ errors }: { errors: Record<string, any> }) {
+  const liveRegionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0 && liveRegionRef.current) {
+      const errorMessages = Object.values(errors)
+        .map((err: any) => err.message)
+        .join(', ');
+      liveRegionRef.current.textContent = `Form errors: ${errorMessages}`;
+    }
+  }, [errors]);
+
+  return (
+    <>
+      <div
+        ref={liveRegionRef}
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+        style={{ position: 'absolute', left: '-10000px' }}
+      />
+      {Object.entries(errors).map(([field, error]: [string, any]) => (
+        <Alert key={field} severity="error" sx={{ mt: 1 }}>
+          {error.message}
+        </Alert>
+      ))}
+    </>
+  );
+}
+
+### Grouped Fields
+import { FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from '@mui/material';
+
+function CheckboxGroup() {
+  return (
+    <FormControl component="fieldset" variant="standard">
+      <FormLabel component="legend" id="interests-label">
+        Select Your Interests
+      </FormLabel>
+      <FormGroup aria-labelledby="interests-label">
+        <FormControlLabel
+          control={<Checkbox name="tech" />}
+          label="Technology"
+        />
+        <FormControlLabel
+          control={<Checkbox name="design" />}
+          label="Design"
+        />
+        <FormControlLabel
+          control={<Checkbox name="business" />}
+          label="Business"
+        />
+      </FormGroup>
+    </FormControl>
+  );
+}
+
+---
+
+## 5. Interactive Elements & MUI Components
+
+### Button Accessibility
+import { Button, IconButton } from '@mui/material';
+import { Delete, Add } from '@mui/icons-material';
+
+// ✅ GOOD: Text button
+<Button variant="contained" onClick={handleClick}>
+  Add Item
+</Button>
+
+// ✅ GOOD: Icon button with label
+<IconButton
+  aria-label="Delete item"
+  onClick={handleDelete}
+  color="error"
+>
+  <Delete />
+</IconButton>
+
+// ✅ GOOD: Button with icon and text
+<Button
+  variant="outlined"
+  startIcon={<Add />}
+  onClick={handleAdd}
+>
+  Add New
+</Button>
+
+// ❌ BAD: Icon button without label
+<IconButton onClick={handleDelete}>
+  <Delete />
+</IconButton>
+
+### Menu Accessibility
+import { useState } from 'react';
+import { Menu, MenuItem, IconButton } from '@mui/material';
+import { MoreVert } from '@mui/icons-material';
+
+function AccessibleMenu() {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  return (
+    <>
+      <IconButton
+        aria-label="More options"
+        aria-controls={open ? 'options-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+      >
+        <MoreVert />
+      </IconButton>
+      <Menu
+        id="options-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        MenuListProps={{
+          'aria-labelledby': 'options-button',
+        }}
+      >
+        <MenuItem onClick={() => setAnchorEl(null)}>Edit</MenuItem>
+        <MenuItem onClick={() => setAnchorEl(null)}>Delete</MenuItem>
+        <MenuItem onClick={() => setAnchorEl(null)}>Share</MenuItem>
+      </Menu>
+    </>
+  );
+}
+
+### Tooltip with Accessibility
+import { Tooltip, IconButton } from '@mui/material';
+import { Info } from '@mui/icons-material';
+
+// ✅ GOOD: Tooltip that works with keyboard
+<Tooltip title="Additional information about this feature" arrow>
+  <IconButton aria-label="Information">
+    <Info />
+  </IconButton>
+</Tooltip>
+
+// For react-tooltip library
+import { Tooltip as ReactTooltip } from 'react-tooltip';
+
+<button
+  data-tooltip-id="my-tooltip"
+  data-tooltip-content="Helpful information"
+  aria-describedby="my-tooltip"
+>
+  Hover me
+</button>
+<ReactTooltip id="my-tooltip" />
+
+### Notification with Notistack
+import { useSnackbar } from 'notistack';
+
+function NotificationExample() {
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleSuccess = () => {
+    enqueueSnackbar('Operation completed successfully', {
+      variant: 'success',
+      anchorOrigin: { vertical: 'top', horizontal: 'right' },
+      // Notistack handles aria-live regions automatically
+    });
+  };
+
+  return <button onClick={handleSuccess}>Show Success</button>;
+}
+
+### Loading States
+import { CircularProgress, Button } from '@mui/material';
+
+function AsyncButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) {
+  return (
+    <Button
+      variant="contained"
+      onClick={onClick}
+      disabled={isLoading}
+      aria-busy={isLoading}
+      startIcon={isLoading ? <CircularProgress size={20} /> : null}
+    >
+      {isLoading ? 'Loading...' : 'Submit'}
+    </Button>
+  );
+}
+
+// Loading overlay with announcement
+function LoadingOverlay({ isLoading }: { isLoading: boolean }) {
+  if (!isLoading) return null;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Content is loading"
+      style={{ /* overlay styles */ }}
+    >
+      <CircularProgress />
+      <span className="sr-only">Loading, please wait...</span>
+    </div>
+  );
+}
+
+---
+
+## 6. Images, Icons, and Media
+
+### Images with react-lazy-load-image-component
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/blur.css';
+
+// ✅ GOOD: Meaningful alt text
+<LazyLoadImage
+  src="/profile.jpg"
+  alt="Jane Doe, Software Engineer at Tech Corp"
+  effect="blur"
+  width={200}
+  height={200}
+/>
+
+// ✅ GOOD: Decorative image
+<LazyLoadImage
+  src="/background-pattern.png"
+  alt=""
+  role="presentation"
+  effect="blur"
+/>
+
+// ❌ BAD: Missing or generic alt text
+<LazyLoadImage src="/image.jpg" alt="image" />
+
+### Icon-Only Buttons (MUI Icons)
+import { IconButton } from '@mui/material';
+import { Edit, Delete, Share, Favorite, FavoriteBorder } from '@mui/icons-material';
+
+// ✅ Icon buttons with descriptive labels
+<IconButton aria-label="Edit profile">
+  <Edit />
+</IconButton>
+
+<IconButton aria-label="Delete item">
+  <Delete />
+</IconButton>
+
+// ✅ Toggle button with state announcement
+function FavoriteButton({ isFavorite }: { isFavorite: boolean }) {
+  return (
+    <IconButton
+      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      aria-pressed={isFavorite}
+    >
+      {isFavorite ? <Favorite /> : <FavoriteBorder />}
+    </IconButton>
+  );
+}
+
+### Image Upload with react-dropzone
+import { useDropzone } from 'react-dropzone';
+import { Box, Typography } from '@mui/material';
+
+function AccessibleDropzone() {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { 'image/*': [] },
+  });
+
+  return (
+    <Box
+      {...getRootProps()}
+      sx={{
+        border: '2px dashed',
+        borderColor: 'primary.main',
+        p: 4,
+        textAlign: 'center',
+      }}
+    >
+      <input
+        {...getInputProps()}
+        aria-label="Upload image"
+        aria-describedby="dropzone-description"
+      />
+      <Typography id="dropzone-description">
+        {isDragActive
+          ? 'Drop the image here'
+          : 'Drag and drop an image here, or click to select'}
+      </Typography>
+    </Box>
+  );
+}
+
+### Image Cropping with react-image-crop
+import ReactCrop, { type Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+function ImageCropper() {
+  const [crop, setCrop] = useState<Crop>();
+
+  return (
+    <div role="group" aria-label="Image cropping tool">
+      <ReactCrop crop={crop} onChange={setCrop}>
+        <img src="/image.jpg" alt="Image to crop" />
+      </ReactCrop>
+      <button
+        onClick={handleCrop}
+        aria-label="Apply crop to image"
+      >
+        Apply Crop
+      </button>
+    </div>
+  );
+}
+
+### Media Controls with Framer Motion
+import { motion } from 'framer-motion';
+
+// ✅ Respect prefers-reduced-motion
+const useReducedMotion = () => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+};
+
+function AnimatedCard() {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.3 }}
+    >
+      Content
+    </motion.div>
+  );
+}
+
+### Carousel with react-slick
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+
+function AccessibleCarousel() {
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    accessibility: true, // Enable keyboard navigation
+    focusOnSelect: true,
+  };
+
+  return (
+    <div role="region" aria-label="Image carousel">
+      <Slider {...settings}>
+        <div>
+          <img src="/slide1.jpg" alt="Slide 1 description" />
+        </div>
+        <div>
+          <img src="/slide2.jpg" alt="Slide 2 description" />
+        </div>
+        <div>
+          <img src="/slide3.jpg" alt="Slide 3 description" />
+        </div>
+      </Slider>
+    </div>
+  );
+}
+
+---
+
+## 7. Data Visualization & Tables
+
+### MUI DataGrid Accessibility
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+
+const columns: GridColDef[] = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    width: 90,
+    headerClassName: 'data-grid-header',
+  },
+  {
+    field: 'name',
+    headerName: 'Full Name',
+    width: 150,
+    description: 'Full name of the user', // Adds tooltip for context
+  },
+  {
+    field: 'email',
+    headerName: 'Email',
+    width: 200,
+  },
+];
+
+function AccessibleDataGrid() {
+  return (
+    <div style={{ height: 400, width: '100%' }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        aria-label="User data table"
+        // MUI DataGrid has built-in keyboard navigation
+        // and screen reader support
+      />
+    </div>
+  );
+}
+
+### Virtualized Lists with react-window
+import { FixedSizeList } from 'react-window';
+
+function VirtualizedList({ items }: { items: string[] }) {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div
+      style={style}
+      role="listitem"
+      aria-label={`Item ${index + 1} of ${items.length}`}
+    >
+      {items[index]}
+    </div>
+  );
+
+  return (
+    <FixedSizeList
+      height={400}
+      itemCount={items.length}
+      itemSize={50}
+      width="100%"
+      role="list"
+      aria-label="Scrollable list of items"
+    >
+      {Row}
+    </FixedSizeList>
+  );
+}
+
+### Charts with Recharts
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+function AccessibleChart({ data }: { data: any[] }) {
+  return (
+    <figure>
+      <figcaption id="chart-caption">
+        Sales performance over the last 6 months
+      </figcaption>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart
+          data={data}
+          aria-labelledby="chart-caption"
+          role="img"
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="sales"
+            stroke="#8884d8"
+            activeDot={{ r: 8 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+      
+      {/* Provide data table as fallback */}
+      <details>
+        <summary>View data table</summary>
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Sales</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.name}>
+                <td>{item.name}</td>
+                <td>{item.sales}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </figure>
+  );
+}
+
+---
+
+## 8. Routing, Navigation & Page Structure
+
+### Document Head with react-helmet-async
+import { Helmet } from 'react-helmet-async';
+
+function ProductPage({ product }: { product: Product }) {
+  return (
+    <>
+      <Helmet>
+        <title>{product.name} | My Store</title>
+        <meta name="description" content={product.description} />
+        <html lang="en" />
+      </Helmet>
+      
+      <main>
+        <h1>{product.name}</h1>
+        {/* Page content */}
+      </main>
+    </>
+  );
+}
+
+### Skip to Content Link
+import { styled } from '@mui/material/styles';
+
+const SkipLink = styled('a')(({ theme }) => ({
+  position: 'absolute',
+  top: -40,
+  left: 0,
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  padding: theme.spacing(1, 2),
+  textDecoration: 'none',
+  zIndex: 9999,
+  '&:focus': {
+    top: 0,
+  },
+}));
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <SkipLink href="#main-content">
+        Skip to main content
+      </SkipLink>
+      
+      <nav aria-label="Main navigation">
+        {/* Navigation items */}
+      </nav>
+      
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
+    </>
+  );
+}
+
+### Breadcrumbs
+import { Breadcrumbs, Link, Typography } from '@mui/material';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
+
+function BreadcrumbNav() {
+  const location = useLocation();
+  const pathnames = location.pathname.split('/').filter((x) => x);
+
+  return (
+    <nav aria-label="Breadcrumb">
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+          Home
+        </Link>
+        {pathnames.map((value, index) => {
+          const last = index === pathnames.length - 1;
+          const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+
+          return last ? (
+            <Typography key={to} color="text.primary" aria-current="page">
+              {value}
+            </Typography>
+          ) : (
+            <Link key={to} component={RouterLink} to={to} underline="hover" color="inherit">
+              {value}
+            </Link>
+          );
+        })}
+      </Breadcrumbs>
+    </nav>
+  );
+}
+
+### Page Layout Structure
+function PageLayout() {
+  return (
+    <>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      
+      <header role="banner">
+        <nav aria-label="Primary navigation">
+          {/* Main nav */}
+        </nav>
+      </header>
+
+      <div style={{ display: 'flex' }}>
+        <aside aria-label="Sidebar">
+          {/* Sidebar content */}
+        </aside>
+
+        <main id="main-content" tabIndex={-1}>
+          {/* Main content */}
+        </main>
+      </div>
+
+      <footer role="contentinfo">
+        {/* Footer content */}
+      </footer>
+    </>
+  );
+}
+
+---
+
+## 9. Internationalization (react-i18next)
+
+### Complete Button Example with Translation
+import { useTranslation } from 'react-i18next';
+import { Button } from '@mui/material';
+
+function InternationalizedButton() {
+  const { t } = useTranslation();
+
+  return (
+    <Button
+      variant="contained"
+      aria-label={t('button.submit.aria')}
+    >
+      {t('button.submit.label')}
+    </Button>
+  );
+}
+
+// i18n configuration
+// en.json
+{
+  "button": {
+    "submit": {
+      "label": "Submit",
+      "aria": "Submit the form"
+    }
+  }
+}
+
+// es.json
+{
+  "button": {
+    "submit": {
+      "label": "Enviar",
+      "aria": "Enviar el formulario"
+    }
+  }
+}
+
+### Language Switcher with Announcements
+import { useTranslation } from 'react-i18next';
+import { Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { useState, useEffect, useRef } from 'react';
+
+function LanguageSwitcher() {
+  const { i18n, t } = useTranslation();
+  const [language, setLanguage] = useState(i18n.language);
+  const announcementRef = useRef<HTMLDivElement>(null);
+
+  const handleLanguageChange = async (event: SelectChangeEvent) => {
+    const newLanguage = event.target.value;
+    setLanguage(newLanguage);
+    await i18n.changeLanguage(newLanguage);
+    
+    // Announce language change to screen readers
+    if (announcementRef.current) {
+      announcementRef.current.textContent = t('language.changed', { 
+        language: t(`language.${newLanguage}`) 
+      });
+    }
+  };
+
+  useEffect(() => {
+    // Update document language
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
+  return (
+    <>
+      <FormControl fullWidth>
+        <InputLabel id="language-select-label">
+          {t('language.label')}
+        </InputLabel>
+        <Select
+          labelId="language-select-label"
+          id="language-select"
+          value={language}
+          label={t('language.label')}
+          onChange={handleLanguageChange}
+          aria-describedby="language-description"
+        >
+          <MenuItem value="en">English</MenuItem>
+          <MenuItem value="es">Español</MenuItem>
+          <MenuItem value="fr">Français</MenuItem>
+          <MenuItem value="de">Deutsch</MenuItem>
+          <MenuItem value="ar">العربية</MenuItem>
+        </Select>
+        <span id="language-description" className="sr-only">
+          {t('language.description')}
+        </span>
+      </FormControl>
+
+      {/* Live region for language change announcements */}
+      <div
+        ref={announcementRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
+    </>
+  );
+}
+
+### RTL Support
+import { useTranslation } from 'react-i18next';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { useMemo, useEffect } from 'react';
+
+function RTLApp({ children }: { children: React.ReactNode }) {
+  const { i18n } = useTranslation();
+  
+  const direction = useMemo(() => {
+    const rtlLanguages = ['ar', 'he', 'fa', 'ur'];
+    return rtlLanguages.includes(i18n.language) ? 'rtl' : 'ltr';
+  }, [i18n.language]);
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        direction,
+        // Adjust theme for RTL
+        components: {
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                // RTL-aware styles
+              },
+            },
+          },
+        },
+      }),
+    [direction]
+  );
+
+  useEffect(() => {
+    // Set document direction and language
+    document.documentElement.dir = direction;
+    document.documentElement.lang = i18n.language;
+  }, [direction, i18n.language]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
+}
+
+// RTL-aware component example
+import { Box } from '@mui/material';
+
+function RTLAwareComponent() {
+  return (
+    <Box
+      sx={{
+        // Use logical properties instead of left/right
+        marginInlineStart: 2, // instead of marginLeft
+        marginInlineEnd: 4,   // instead of marginRight
+        paddingInlineStart: 2, // instead of paddingLeft
+        paddingInlineEnd: 2,   // instead of paddingRight
+      }}
+    >
+      Content
+    </Box>
+  );
+}
+
+### Number and Date Formatting
+import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { ar, de, enUS, es, fr } from 'date-fns/locale';
+
+const locales = { en: enUS, es, fr, de, ar };
+
+function FormattedContent() {
+  const { i18n, t } = useTranslation();
+
+  const formatNumber = (value: number) => {
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
+  };
+
+  const formatDate = (date: Date) => {
+    const locale = locales[i18n.language as keyof typeof locales] || enUS;
+    return format(date, 'PPP', { locale });
+  };
+
+  const price = 1234.56;
+  const date = new Date();
+
+  return (
+    <div lang={i18n.language}>
+      <p>
+        <span aria-label={t('price.label', { amount: price })}>
+          {formatNumber(price)}
+        </span>
+      </p>
+      <p>
+        <time dateTime={date.toISOString()} aria-label={t('date.label')}>
+          {formatDate(date)}
+        </time>
+      </p>
+    </div>
+  );
+}
+
+---
+
+## 10. Testing & Automation
+
+### Vitest Unit Tests for Accessibility
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { axe, toHaveNoViolations } from 'jest-axe';
+
+// Extend Vitest matchers
+expect.extend(toHaveNoViolations);
+
+describe('Button Component Accessibility', () => {
+  it('should not have accessibility violations', async () => {
+    const { container } = render(
+      <button onClick={() => {}}>Click me</button>
+    );
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('should have proper ARIA label', () => {
+    render(<button aria-label="Close dialog">X</button>);
+    expect(screen.getByLabelText('Close dialog')).toBeInTheDocument();
+  });
+
+  it('should be keyboard accessible', () => {
+    const { container } = render(<button>Submit</button>);
+    const button = container.querySelector('button');
+    expect(button).toHaveAttribute('type', 'button');
+    expect(button).not.toHaveAttribute('tabindex', '-1');
+  });
+
+  it('should have sufficient color contrast', async () => {
+    const { container } = render(
+      <button style={{ backgroundColor: '#000', color: '#fff' }}>
+        High Contrast
+      </button>
+    );
+    const results = await axe(container, {
+      rules: {
+        'color-contrast': { enabled: true },
+      },
+    });
+    expect(results).toHaveNoViolations();
+  });
+});
+
+// Form accessibility tests
+describe('Form Accessibility', () => {
+  it('should associate labels with inputs', () => {
+    render(
+      <form>
+        <label htmlFor="email">Email</label>
+        <input id="email" type="email" />
+      </form>
+    );
+    
+    const input = screen.getByLabelText('Email');
+    expect(input).toHaveAttribute('type', 'email');
+  });
+
+  it('should announce validation errors', async () => {
+    const { container } = render(
+      <div>
+        <label htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          aria-invalid="true"
+          aria-describedby="password-error"
+        />
+        <span id="password-error" role="alert">
+          Password must be at least 8 characters
+        </span>
+      </div>
+    );
+
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+    
+    const errorMessage = screen.getByRole('alert');
+    expect(errorMessage).toHaveTextContent('Password must be at least 8 characters');
+  });
+});
+
+### Playwright E2E Accessibility Tests
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+test.describe('Home Page Accessibility', () => {
+  test('should not have any automatically detectable accessibility issues', async ({ page }) => {
+    await page.goto('/');
+    
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test('should be keyboard navigable', async ({ page }) => {
+    await page.goto('/');
+    
+    // Tab through interactive elements
+    await page.keyboard.press('Tab');
+    const firstFocusable = await page.evaluate(() => document.activeElement?.tagName);
+    expect(['BUTTON', 'A', 'INPUT']).toContain(firstFocusable);
+    
+    // Test skip link
+    await page.keyboard.press('Tab');
+    const skipLink = page.getByText('Skip to main content');
+    await expect(skipLink).toBeFocused();
+    
+    await page.keyboard.press('Enter');
+    const mainContent = page.locator('#main-content');
+    await expect(mainContent).toBeFocused();
+  });
+
+  test('should have proper heading hierarchy', async ({ page }) => {
+    await page.goto('/');
+    
+    const headings = await page.locator('h1, h2, h3, h4, h5, h6').allTextContents();
+    
+    // Check that there's exactly one h1
+    const h1Count = await page.locator('h1').count();
+    expect(h1Count).toBe(1);
+    
+    // Run axe check specifically for heading order
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withRules(['heading-order'])
+      .analyze();
+    
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test('should handle form validation accessibly', async ({ page }) => {
+    await page.goto('/contact');
+    
+    // Submit empty form
+    await page.click('button[type="submit"]');
+    
+    // Check for error announcements
+    const errorAlert = page.getByRole('alert').first();
+    await expect(errorAlert).toBeVisible();
+    
+    // Check that focus moves to first error
+    const firstInvalidInput = page.locator('[aria-invalid="true"]').first();
+    await expect(firstInvalidInput).toBeFocused();
+  });
+
+  test('should trap focus in modal dialogs', async ({ page }) => {
+    await page.goto('/');
+    
+    // Open dialog
+    await page.click('button:has-text("Open Dialog")');
+    
+    // Check modal is present
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    
+    // Tab through dialog elements
+    await page.keyboard.press('Tab');
+    const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
+    
+    // Ensure focus stays within dialog
+    const isInsideDialog = await page.evaluate(() => {
+      const activeEl = document.activeElement;
+      const dialogEl = document.querySelector('[role="dialog"]');
+      return dialogEl?.contains(activeEl);
+    });
+    expect(isInsideDialog).toBe(true);
+    
+    // Close with Escape
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+  });
+
+  test('should provide alternative text for images', async ({ page }) => {
+    await page.goto('/gallery');
+    
+    const images = await page.locator('img').all();
+    
+    for (const image of images) {
+      const alt = await image.getAttribute('alt');
+      const role = await image.getAttribute('role');
+      
+      // Either has meaningful alt text or is marked as decorative
+      expect(alt !== null || role === 'presentation').toBe(true);
+      
+      // If decorative, alt should be empty
+      if (role === 'presentation') {
+        expect(alt).toBe('');
+      }
+    }
+  });
+});
+
+// Test with different viewport sizes
+test.describe('Responsive Accessibility', () => {
+  test('should be accessible on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test('should be accessible on tablet', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/');
+    
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+});
+
+### Storybook a11y Addon Integration
+// .storybook/preview.tsx
+import type { Preview } from '@storybook/react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { createTheme } from '@mui/material/styles';
+
+const preview: Preview = {
+  parameters: {
+    a11y: {
+      // Configure axe-core options
+      config: {
+        rules: [
+          {
+            id: 'color-contrast',
+            enabled: true,
+          },
+          {
+            id: 'label',
+            enabled: true,
+          },
+        ],
+      },
+      // Options for axe-core
+      options: {
+        runOnly: {
+          type: 'tag',
+          values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+        },
+      },
+    },
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/,
+      },
+    },
+  },
+  decorators: [
+    (Story) => (
+      <ThemeProvider theme={createTheme()}>
+        <CssBaseline />
+        <Story />
+      </ThemeProvider>
+    ),
+  ],
+};
+
+export default preview;
+
+// Component story with a11y tests
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from '@mui/material';
+import { Delete } from '@mui/icons-material';
+
+const meta: Meta<typeof Button> = {
+  title: 'Components/Button',
+  component: Button,
+  tags: ['autodocs'],
+  parameters: {
+    a11y: {
+      // Component-specific a11y configuration
+      config: {
+        rules: [
+          {
+            id: 'button-name',
+            enabled: true,
+          },
+        ],
+      },
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+// ✅ Accessible story
+export const WithLabel: Story = {
+  args: {
+    children: 'Click me',
+    variant: 'contained',
+  },
+};
+
+// ✅ Accessible icon button
+export const IconButton: Story = {
+  args: {
+    children: <Delete />,
+    'aria-label': 'Delete item',
+  },
+};
+
+// ❌ This will fail a11y checks (no accessible name)
+export const InaccessibleIconButton: Story = {
+  args: {
+    children: <Delete />,
+  },
+  parameters: {
+    a11y: {
+      // Disable specific rule for this story (for demonstration)
+      disable: true,
+    },
+  },
+};
+
+### Custom Accessibility Testing Utilities
+// test-utils/a11y-helpers.ts
+import { render, RenderOptions } from '@testing-library/react';
+import { axe, toHaveNoViolations } from 'jest-axe';
+import { expect } from 'vitest';
+
+expect.extend(toHaveNoViolations);
+
+/**
+ * Custom render function that includes accessibility checks
+ */
+export async function renderWithA11y(
+  ui: React.ReactElement,
+  options?: RenderOptions
+) {
+  const renderResult = render(ui, options);
+  const results = await axe(renderResult.container);
+  
+  return {
+    ...renderResult,
+    a11yResults: results,
+  };
+}
+
+/**
+ * Check if element is keyboard accessible
+ */
+export function isKeyboardAccessible(element: HTMLElement): boolean {
+  const tabIndex = element.getAttribute('tabindex');
+  const isInteractive = ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(
+    element.tagName
+  );
+  
+  return isInteractive || (tabIndex !== null && parseInt(tabIndex) >= 0);
+}
+
+/**
+ * Check color contrast ratio
+ */
+export function getContrastRatio(
+  foreground: string,
+  background: string
+): number {
+  const getLuminance = (color: string) => {
+    // Convert hex to RGB
+    const rgb = color.match(/\w\w/g)?.map((x) => parseInt(x, 16)) || [0, 0, 0];
+    const [r, g, b] = rgb.map((val) => {
+      const sRGB = val / 255;
+      return sRGB <= 0.03928
+        ? sRGB / 12.92
+        : Math.pow((sRGB + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+
+  const l1 = getLuminance(foreground);
+  const l2 = getLuminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Assert WCAG AA compliance for contrast
+ */
+export function assertWCAGAAContrast(
+  foreground: string,
+  background: string,
+  fontSize: number = 16
+) {
+  const ratio = getContrastRatio(foreground, background);
+  const minRatio = fontSize >= 18 || (fontSize >= 14 && bold) ? 3 : 4.5;
+  
+  expect(ratio).toBeGreaterThanOrEqual(minRatio);
+}
+
+/**
+ * Check heading hierarchy
+ */
+export function validateHeadingHierarchy(container: HTMLElement): boolean {
+  const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+  
+  // Check for exactly one h1
+  const h1Count = headings.filter((h) => h.tagName === 'H1').length;
+  if (h1Count !== 1) return false;
+  
+  // Check sequential order
+  let previousLevel = 0;
+  for (const heading of headings) {
+    const level = parseInt(heading.tagName.substring(1));
+    if (level > previousLevel + 1) return false;
+    previousLevel = level;
+  }
+  
+  return true;
+}
+
+/**
+ * Simulate keyboard navigation
+ */
+export async function simulateKeyboardNavigation(
+  container: HTMLElement,
+  keys: string[]
+) {
+  const focusableElements = container.querySelectorAll(
+    'a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  
+  let currentIndex = -1;
+  const focusOrder: Element[] = [];
+  
+  for (const key of keys) {
+    if (key === 'Tab') {
+      currentIndex = (currentIndex + 1) % focusableElements.length;
+      const element = focusableElements[currentIndex] as HTMLElement;
+      element.focus();
+      focusOrder.push(element);
+    } else if (key === 'Shift+Tab') {
+      currentIndex = currentIndex === 0 ? focusableElements.length - 1 : currentIndex - 1;
+      const element = focusableElements[currentIndex] as HTMLElement;
+      element.focus();
+      focusOrder.push(element);
+    }
+  }
+  
+  return focusOrder;
+}
+
+// Usage example
+import { describe, it, expect } from 'vitest';
+
+describe('Component Accessibility', () => {
+  it('should pass all accessibility checks', async () => {
+    const { a11yResults } = await renderWithA11y(
+      <button>Click me</button>
+    );
+    
+    expect(a11yResults).toHaveNoViolations();
+  });
+
+  it('should have proper contrast', () => {
+    assertWCAGAAContrast('#000000', '#ffffff'); // Black on white
+  });
+
+  it('should have valid heading hierarchy', () => {
+    const { container } = render(
+      <div>
+        <h1>Main Title</h1>
+        <h2>Subtitle</h2>
+        <h3>Section</h3>
+      </div>
+    );
+    
+    expect(validateHeadingHierarchy(container)).toBe(true);
+  });
+});
+
+---
+
+## 11. Async Data & Loading States (TanStack Query)
+
+### Loading Skeletons with Announcements
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton, Alert } from '@mui/material';
+import { useEffect, useRef } from 'react';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+function UserProfile({ userId }: { userId: number }) {
+  const announcementRef = useRef<HTMLDivElement>(null);
+  
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch user');
+      return response.json() as Promise<User>;
+    },
+  });
+
+  // Announce loading state changes
+  useEffect(() => {
+    if (announcementRef.current) {
+      if (isLoading) {
+        announcementRef.current.textContent = 'Loading user profile...';
+      } else if (data) {
+        announcementRef.current.textContent = 'User profile loaded successfully';
+      }
+    }
+  }, [isLoading, data]);
+
+  if (isLoading) {
+    return (
+      <div role="status" aria-busy="true" aria-live="polite">
+        <Skeleton variant="circular" width={80} height={80} />
+        <Skeleton variant="text" width="60%" height={32} />
+        <Skeleton variant="text" width="80%" />
+        <Skeleton variant="rectangular" height={200} />
+        <span className="sr-only">Loading user profile...</span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Alert severity="error" role="alert">
+        <strong>Error loading profile:</strong> {error.message}
+      </Alert>
+    );
+  }
+
+  return (
+    <>
+      <div
+        ref={announcementRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
+      
+      <article aria-labelledby="user-name">
+        <h2 id="user-name">{data.name}</h2>
+        <p>{data.email}</p>
+      </article>
+    </>
+  );
+}
+
+### Error Boundaries with Accessible Error Messages
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { Alert, Button, Box } from '@mui/material';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class AccessibleErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  private handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <Box role="alert" aria-live="assertive" sx={{ p: 3 }}>
+          <Alert
+            severity="error"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={this.handleReset}
+                aria-label="Try again"
+              >
+                Try Again
+              </Button>
+            }
+          >
+            <strong>Something went wrong</strong>
+            <p>{this.state.error?.message || 'An unexpected error occurred'}</p>
+          </Alert>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage with TanStack Query
+import { QueryErrorResetBoundary } from '@tanstack/react-query';
+
+function App() {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <AccessibleErrorBoundary>
+          <UserProfile userId={1} />
+        </AccessibleErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+}
+
+### Optimistic Updates with Screen Reader Feedback
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import { useRef } from 'react';
+
+interface Todo {
+  id: number;
+  text: string;
+  completed: boolean;
+}
+
+function TodoItem({ todo }: { todo: Todo }) {
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+  const announcementRef = useRef<HTMLDivElement>(null);
+
+  const mutation = useMutation({
+    mutationFn: async (completed: boolean) => {
+      const response = await fetch(`/api/todos/${todo.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ completed }),
+      });
+      if (!response.ok) throw new Error('Failed to update todo');
+      return response.json();
+    },
+    
+    // Optimistic update
+    onMutate: async (completed) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['todos'] });
+
+      // Snapshot previous value
+      const previousTodos = queryClient.getQueryData<Todo[]>(['todos']);
+
+      // Optimistically update
+      queryClient.setQueryData<Todo[]>(['todos'], (old) =>
+        old?.map((t) =>
+          t.id === todo.id ? { ...t, completed } : t
+        )
+      );
+
+      // Announce to screen readers
+      if (announcementRef.current) {
+        announcementRef.current.textContent = completed
+          ? `Marking "${todo.text}" as complete`
+          : `Marking "${todo.text}" as incomplete`;
+      }
+
+      return { previousTodos };
+    },
+
+    onError: (err, completed, context) => {
+      // Rollback on error
+      queryClient.setQueryData(['todos'], context?.previousTodos);
+      
+      enqueueSnackbar('Failed to update todo', {
+        variant: 'error',
+        // Notistack automatically creates accessible announcements
+      });
+    },
+
+    onSuccess: (data, completed) => {
+      enqueueSnackbar(
+        completed ? 'Todo marked as complete' : 'Todo marked as incomplete',
+        { variant: 'success' }
+      );
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+
+  return (
+    <>
+      <div
+        ref={announcementRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
+      
+      <div>
+        <input
+          type="checkbox"
+          id={`todo-${todo.id}`}
+          checked={todo.completed}
+          onChange={(e) => mutation.mutate(e.target.checked)}
+          disabled={mutation.isPending}
+          aria-label={`Mark "${todo.text}" as ${todo.completed ? 'incomplete' : 'complete'}`}
+          aria-busy={mutation.isPending}
+        />
+        <label htmlFor={`todo-${todo.id}`}>{todo.text}</label>
+      </div>
+    </>
+  );
+}

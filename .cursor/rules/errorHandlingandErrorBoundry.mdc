@@ -1,0 +1,885 @@
+---
+alwaysApply: true
+---
+# React TypeScript Project Configuration
+
+> Comprehensive development guidelines for React 18.3+, TypeScript 5.6+, Vite 6, Material-UI 6.1+, React Query 5.59+, Zustand 5.0+, React Hook Form 7.53+, Zod 3.23+, Supabase 2.46+
+
+## Table of Contents
+1. [Error Handling & Error Boundaries](#error-handling--error-boundaries)
+---
+
+## 1. Error Handling & Error Boundaries
+
+### Error Boundary Patterns with React 18
+
+Error boundaries catch JavaScript errors anywhere in the component tree, log those errors, and display a fallback UI.
+
+#### Guidelines
+- Create reusable error boundary components for different contexts (page-level, component-level, async-level)
+- Use error boundaries to wrap route components, major feature sections, and third-party components
+- Implement proper error logging with context information
+- Provide user-friendly error messages with recovery actions
+- Never wrap the entire app in a single error boundary
+- Use React 18's new error boundary features with concurrent rendering
+
+#### Implementation
+
+**✅ Correct: Comprehensive Error Boundary**
+
+// src/components/ErrorBoundary/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Box, Button, Typography, Container } from '@mui/material';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  resetKeys?: Array<string | number>;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
+
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log error to monitoring service
+    console.error('Error Boundary caught:', error, errorInfo);
+    
+    // Call custom error handler if provided
+    this.props.onError?.(error, errorInfo);
+    
+    // Log to external service (e.g., Sentry, LogRocket)
+    this.logErrorToService(error, errorInfo);
+    
+    this.setState({ error, errorInfo });
+  }
+
+  componentDidUpdate(prevProps: Props): void {
+    // Reset error boundary when resetKeys change
+    if (this.state.hasError && this.props.resetKeys) {
+      const hasResetKeysChanged = this.props.resetKeys.some(
+        (key, index) => key !== prevProps.resetKeys?.[index]
+      );
+      
+      if (hasResetKeysChanged) {
+        this.reset();
+      }
+    }
+  }
+
+  private logErrorToService(error: Error, errorInfo: ErrorInfo): void {
+    // Integration with error monitoring service
+    if (import.meta.env.PROD) {
+      // Sentry.captureException(error, {
+      //   contexts: {
+      //     react: {
+      //       componentStack: errorInfo.componentStack,
+      //     },
+      //   },
+      // });
+    }
+  }
+
+  private reset = (): void => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    });
+  };
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Default fallback UI
+      return (
+        <Container maxWidth="sm">
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              textAlign: 'center',
+              gap: 2,
+            }}
+          >
+            <ErrorOutlineIcon sx={{ fontSize: 64, color: 'error.main' }} />
+            <Typography variant="h4" component="h1" gutterBottom>
+              Oops! Something went wrong
+            </Typography>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              We're sorry for the inconvenience. The error has been logged and
+              we'll look into it.
+            </Typography>
+            {import.meta.env.DEV && this.state.error && (
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: 'grey.100',
+                  borderRadius: 1,
+                  width: '100%',
+                  textAlign: 'left',
+                }}
+              >
+                <Typography variant="body2" component="pre" sx={{ fontSize: '0.75rem' }}>
+                  {this.state.error.toString()}
+                  {this.state.errorInfo?.componentStack}
+                </Typography>
+              </Box>
+            )}
+            <Button
+              variant="contained"
+              onClick={this.reset}
+              sx={{ mt: 2 }}
+            >
+              Try Again
+            </Button>
+          </Box>
+        </Container>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+
+**✅ Correct: Async Error Boundary for Suspense**
+
+// src/components/ErrorBoundary/AsyncErrorBoundary.tsx
+import { ReactNode } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Box, Button, Typography, Alert } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+
+interface Props {
+  children: ReactNode;
+  resetKeys?: Array<string | number>;
+}
+
+function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
+  return (
+    <Box sx={{ p: 3 }}>
+      <Alert
+        severity="error"
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={resetErrorBoundary}
+          >
+            Retry
+          </Button>
+        }
+      >
+        <Typography variant="subtitle2" gutterBottom>
+          Failed to load content
+        </Typography>
+        <Typography variant="body2">
+          {error.message || 'An unexpected error occurred'}
+        </Typography>
+      </Alert>
+    </Box>
+  );
+}
+
+export function AsyncErrorBoundary({ children, resetKeys }: Props) {
+  return (
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        // Reset any query caches or state
+        window.location.reload();
+      }}
+      resetKeys={resetKeys}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+**❌ Incorrect: Single Error Boundary for Entire App**
+
+// DON'T: Wrap entire app - too broad, poor UX
+function App() {
+  return (
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
+  );
+}
+
+**✅ Correct: Strategic Error Boundary Placement**
+
+// DO: Place error boundaries at appropriate levels
+function App() {
+  return (
+    <Router>
+      <ErrorBoundary fallback={<GlobalError />}>
+        <Suspense fallback={<GlobalLoader />}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <ErrorBoundary resetKeys={['home']}>
+                  <Home />
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ErrorBoundary resetKeys={['dashboard']}>
+                  <Dashboard />
+                </ErrorBoundary>
+              }
+            />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
+    </Router>
+  );
+}
+
+### Global Error Handling Strategies
+
+#### Guidelines
+- Implement global error handlers for unhandled promise rejections and errors
+- Create centralized error handling utilities
+- Standardize error response formats
+- Implement proper error classification (client, server, network, validation)
+- Use error codes for programmatic handling
+- Provide context-aware error messages
+
+#### Implementation
+
+**✅ Correct: Global Error Handler Setup**
+
+// src/utils/errorHandling.ts
+export enum ErrorType {
+  NETWORK = 'NETWORK',
+  VALIDATION = 'VALIDATION',
+  AUTHORIZATION = 'AUTHORIZATION',
+  NOT_FOUND = 'NOT_FOUND',
+  SERVER = 'SERVER',
+  CLIENT = 'CLIENT',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public type: ErrorType = ErrorType.UNKNOWN,
+    public statusCode?: number,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'AppError';
+    Object.setPrototypeOf(this, AppError.prototype);
+  }
+
+  isRetryable(): boolean {
+    return [ErrorType.NETWORK, ErrorType.SERVER].includes(this.type);
+  }
+
+  getUserMessage(): string {
+    const messages: Record<ErrorType, string> = {
+      [ErrorType.NETWORK]: 'Network connection issue. Please check your internet connection.',
+      [ErrorType.VALIDATION]: 'Please check your input and try again.',
+      [ErrorType.AUTHORIZATION]: 'You are not authorized to perform this action.',
+      [ErrorType.NOT_FOUND]: 'The requested resource was not found.',
+      [ErrorType.SERVER]: 'A server error occurred. Please try again later.',
+      [ErrorType.CLIENT]: this.message,
+      [ErrorType.UNKNOWN]: 'An unexpected error occurred. Please try again.',
+    };
+    return messages[this.type] || this.message;
+  }
+}
+
+export function classifyError(error: unknown): AppError {
+  if (error instanceof AppError) {
+    return error;
+  }
+
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return new AppError(
+      'Network request failed',
+      ErrorType.NETWORK,
+      0,
+      error
+    );
+  }
+
+  if (error && typeof error === 'object' && 'status' in error) {
+    const statusCode = (error as { status: number }).status;
+    
+    if (statusCode === 401 || statusCode === 403) {
+      return new AppError(
+        'Unauthorized access',
+        ErrorType.AUTHORIZATION,
+        statusCode,
+        error
+      );
+    }
+    
+    if (statusCode === 404) {
+      return new AppError(
+        'Resource not found',
+        ErrorType.NOT_FOUND,
+        statusCode,
+        error
+      );
+    }
+    
+    if (statusCode >= 500) {
+      return new AppError(
+        'Server error',
+        ErrorType.SERVER,
+        statusCode,
+        error
+      );
+    }
+    
+    if (statusCode >= 400) {
+      return new AppError(
+        'Client error',
+        ErrorType.CLIENT,
+        statusCode,
+        error
+      );
+    }
+  }
+
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  return new AppError(message, ErrorType.UNKNOWN, undefined, error);
+}
+
+// Global error handlers
+export function setupGlobalErrorHandlers(): void {
+  // Unhandled promise rejections
+  window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    const error = classifyError(event.reason);
+    console.error('Unhandled promise rejection:', error);
+    
+    // Log to monitoring service
+    logErrorToMonitoring(error);
+    
+    // Show user notification if appropriate
+    if (!error.isRetryable()) {
+      showErrorNotification(error.getUserMessage());
+    }
+  });
+
+  // Global errors
+  window.addEventListener('error', (event) => {
+    event.preventDefault();
+    const error = classifyError(event.error);
+    console.error('Global error:', error);
+    logErrorToMonitoring(error);
+  });
+}
+
+function logErrorToMonitoring(error: AppError): void {
+  // Integration with monitoring service (Sentry, LogRocket, etc.)
+  if (import.meta.env.PROD) {
+    console.log('Logging to monitoring service:', error);
+    // Sentry.captureException(error);
+  }
+}
+
+function showErrorNotification(message: string): void {
+  // Show toast notification or alert
+  console.log('Show notification:', message);
+}
+
+**✅ Correct: Error Handler Hook**
+
+// src/hooks/useErrorHandler.ts
+import { useCallback } from 'react';
+import { useSnackbar } from 'notistack';
+import { classifyError, AppError, ErrorType } from '@/utils/errorHandling';
+
+export function useErrorHandler() {
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleError = useCallback(
+    (error: unknown, context?: string) => {
+      const appError = classifyError(error);
+      
+      // Log error with context
+      console.error(`Error in ${context || 'application'}:`, appError);
+
+      // Show user-friendly message
+      enqueueSnackbar(appError.getUserMessage(), {
+        variant: appError.type === ErrorType.NETWORK ? 'warning' : 'error',
+        autoHideDuration: appError.isRetryable() ? 5000 : 3000,
+      });
+
+      // Return error for further handling if needed
+      return appError;
+    },
+    [enqueueSnackbar]
+  );
+
+  const handleAsyncError = useCallback(
+    async <T>(
+      promise: Promise<T>,
+      context?: string
+    ): Promise<[T | null, AppError | null]> => {
+      try {
+        const data = await promise;
+        return [data, null];
+      } catch (error) {
+        const appError = handleError(error, context);
+        return [null, appError];
+      }
+    },
+    [handleError]
+  );
+
+  return { handleError, handleAsyncError };
+}
+
+// Usage example
+function MyComponent() {
+  const { handleError, handleAsyncError } = useErrorHandler();
+
+  const fetchData = async () => {
+    const [data, error] = await handleAsyncError(
+      fetch('/api/data').then(r => r.json()),
+      'fetchData'
+    );
+
+    if (error) {
+      // Handle error case
+      return;
+    }
+
+    // Use data
+    console.log(data);
+  };
+
+  return <button onClick={fetchData}>Fetch Data</button>;
+}
+
+### API Error Handling with React Query
+
+#### Guidelines
+- Use React Query's built-in error handling mechanisms
+- Implement retry strategies based on error type
+- Create custom error handling for mutations
+- Use onError callbacks for side effects
+- Implement global error handling for queries
+- Provide meaningful error states in UI
+
+#### Implementation
+
+**✅ Correct: React Query Error Handling**
+
+// src/lib/queryClient.ts
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { classifyError, ErrorType } from '@/utils/errorHandling';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        const appError = classifyError(error);
+        
+        // Don't retry on authorization or validation errors
+        if ([ErrorType.AUTHORIZATION, ErrorType.VALIDATION].includes(appError.type)) {
+          return false;
+        }
+        
+        // Retry network and server errors up to 3 times
+        if (appError.isRetryable() && failureCount < 3) {
+          return true;
+        }
+        
+        return false;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: false, // Don't retry mutations by default
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      const appError = classifyError(error);
+      console.error(`Query error [${query.queryHash}]:`, appError);
+      
+      // Handle specific error types globally
+      if (appError.type === ErrorType.AUTHORIZATION) {
+        // Redirect to login or refresh token
+        window.location.href = '/login';
+      }
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      const appError = classifyError(error);
+      console.error(`Mutation error [${mutation.options.mutationKey}]:`, appError);
+      
+      // Global mutation error handling
+      if (appError.statusCode === 409) {
+        // Handle conflict errors
+        console.log('Conflict detected, refresh data');
+      }
+    },
+  }),
+});
+
+**✅ Correct: Query with Error Handling**
+
+// src/hooks/useUsers.ts
+import { useQuery } from '@tanstack/react-query';
+import { classifyError } from '@/utils/errorHandling';
+import { supabase } from '@/lib/supabase';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export function useUsers() {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: async (): Promise<User[]> => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        throw classifyError(error);
+      }
+
+      return data;
+    },
+    select: (data) => {
+      // Transform data if needed
+      return data.map(user => ({
+        ...user,
+        displayName: user.name.toUpperCase(),
+      }));
+    },
+  });
+}
+
+// Component usage
+function UserList() {
+  const { data, error, isLoading, isError, refetch } = useUsers();
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+
+  if (isError) {
+    const appError = classifyError(error);
+    return (
+      <Alert
+        severity="error"
+        action={
+          appError.isRetryable() ? (
+            <Button onClick={() => refetch()}>Retry</Button>
+          ) : null
+        }
+      >
+        {appError.getUserMessage()}
+      </Alert>
+    );
+  }
+
+  return (
+    <List>
+      {data?.map(user => (
+        <ListItem key={user.id}>{user.displayName}</ListItem>
+      ))}
+    </List>
+  );
+}
+
+**✅ Correct: Mutation with Optimistic Updates and Error Handling**
+
+// src/hooks/useUpdateUser.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { classifyError, ErrorType } from '@/utils/errorHandling';
+import { supabase } from '@/lib/supabase';
+
+interface UpdateUserInput {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+
+  return useMutation({
+    mutationFn: async (input: UpdateUserInput) => {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ name: input.name, email: input.email })
+        .eq('id', input.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw classifyError(error);
+      }
+
+      return data;
+    },
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['users'] });
+
+      // Snapshot previous value
+      const previousUsers = queryClient.getQueryData(['users']);
+
+      // Optimistically update cache
+      queryClient.setQueryData(['users'], (old: any[]) => {
+        return old.map(user =>
+          user.id === variables.id
+            ? { ...user, name: variables.name, email: variables.email }
+            : user
+        );
+      });
+
+      return { previousUsers };
+    },
+    onError: (error, _variables, context) => {
+      const appError = classifyError(error);
+      
+      // Rollback optimistic update
+      if (context?.previousUsers) {
+        queryClient.setQueryData(['users'], context.previousUsers);
+      }
+
+      // Show error notification
+      enqueueSnackbar(appError.getUserMessage(), {
+        variant: 'error',
+      });
+
+      // Handle specific error types
+      if (appError.type === ErrorType.VALIDATION) {
+        // Show validation errors in form
+        console.log('Validation errors:', appError.details);
+      }
+    },
+    onSuccess: (data) => {
+      enqueueSnackbar('User updated successfully', { variant: 'success' });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', data.id] });
+    },
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+### Retry Strategies and Fallback UI
+
+#### Guidelines
+- Implement exponential backoff for retries
+- Provide manual retry options
+- Show loading states during retries
+- Display helpful error messages with context
+- Implement fallback content for failed loads
+- Use skeleton screens for better UX
+
+**✅ Correct: Retry with Exponential Backoff**
+
+// src/utils/retry.ts
+export interface RetryOptions {
+  maxAttempts?: number;
+  initialDelay?: number;
+  maxDelay?: number;
+  backoffMultiplier?: number;
+  shouldRetry?: (error: unknown) => boolean;
+}
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxAttempts = 3,
+    initialDelay = 1000,
+    maxDelay = 30000,
+    backoffMultiplier = 2,
+    shouldRetry = () => true,
+  } = options;
+
+  let lastError: unknown;
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      const appError = classifyError(error);
+      
+      // Don't retry if error is not retryable
+      if (!shouldRetry(error) || !appError.isRetryable()) {
+        throw error;
+      }
+      
+      // Don't retry on last attempt
+      if (attempt === maxAttempts - 1) {
+        break;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        initialDelay * Math.pow(backoffMultiplier, attempt),
+        maxDelay
+      );
+      
+      console.log(`Retry attempt ${attempt + 1}/${maxAttempts} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Usage with React Query
+export function useDataWithRetry() {
+  return useQuery({
+    queryKey: ['data-with-retry'],
+    queryFn: () => withRetry(
+      () => fetch('/api/data').then(r => r.json()),
+      {
+        maxAttempts: 5,
+        shouldRetry: (error) => {
+          const appError = classifyError(error);
+          return appError.type === ErrorType.NETWORK;
+        },
+      }
+    ),
+  });
+}
+
+**✅ Correct: Fallback UI Component**
+
+// src/components/FallbackUI/FallbackUI.tsx
+import { ReactNode } from 'react';
+import { Box, Button, Typography, Alert } from '@mui/material';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
+
+interface FallbackUIProps {
+  error?: Error;
+  resetErrorBoundary?: () => void;
+  title?: string;
+  message?: string;
+  showRetry?: boolean;
+  children?: ReactNode;
+}
+
+export function FallbackUI({
+  error,
+  resetErrorBoundary,
+  title = 'Something went wrong',
+  message,
+  showRetry = true,
+  children,
+}: FallbackUIProps) {
+  const appError = error ? classifyError(error) : null;
+  const displayMessage = message || appError?.getUserMessage() || 'An error occurred';
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 300,
+        p: 3,
+        textAlign: 'center',
+      }}
+    >
+      <ErrorOutlineIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+      <Typography variant="h5" gutterBottom>
+        {title}
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500 }}>
+        {displayMessage}
+      </Typography>
+      
+      {children || (
+        showRetry && resetErrorBoundary && (
+          <Button
+            variant="contained"
+            startIcon={<RefreshIcon />}
+            onClick={resetErrorBoundary}
+          >
+            Try Again
+          </Button>
+        )
+      )}
+
+      {import.meta.env.DEV && error && (
+        <Alert severity="error" sx={{ mt: 3, width: '100%', textAlign: 'left' }}>
+          <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+            {error.message}
+            {'\n'}
+            {error.stack}
+          </Typography>
+        </Alert>
+      )}
+    </Box>
+  );
+}

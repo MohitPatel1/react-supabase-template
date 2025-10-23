@@ -1,0 +1,2687 @@
+---
+alwaysApply: true
+---
+
+# .cursorrules - React TypeScript Project Guidelines
+
+## 🎯 Project Overview
+
+**Tech Stack Summary**
+- **Framework**: React 18.3+ with TypeScript 5.6+
+- **Build Tool**: Vite 6.0+
+- **Runtime**: Node >=20.0.0, npm >=10.0.0
+- **UI Library**: Material-UI (MUI) 6.1+ with Emotion 11.13+
+- **State Management**: Zustand 5.0+ (Immer), TanStack Query 5.59+
+- **Forms**: React Hook Form 7.53+ with Zod 3.23+ validation
+- **Routing**: React Router 7.0+
+- **Testing**: Vitest 2.1+, Testing Library, Playwright 1.48+, MSW 2.6+
+- **Code Quality**: Biome JS 1.9+, Husky 9.1+, lint-staged 15.2+
+- **Performance**: react-window 1.8+, react-lazy-load-image-component 1.6+
+- **Backend**: Supabase 2.46+
+- **Utilities**: Axios 1.7+, date-fns 4.1+, lodash-es 4.17+, nanoid 5.0+
+
+---
+
+## 📁 Project Structure & File Organization
+
+### Directory Structure
+src/
+├── app/                    # App-level configuration
+│   ├── providers/         # Context providers (Theme, Auth, Query)
+│   ├── routes/            # Route configuration
+│   └── App.tsx            # Root component
+├── components/            # Reusable UI components
+│   ├── common/           # Generic components (Button, Input, Card)
+│   ├── layout/           # Layout components (Header, Sidebar, Footer)
+│   ├── forms/            # Form components
+│   └── ui/               # MUI customized components
+├── features/             # Feature-based modules
+│   ├── auth/            # Authentication feature
+│   │   ├── components/  # Feature-specific components
+│   │   ├── hooks/       # Feature-specific hooks
+│   │   ├── api/         # API calls
+│   │   ├── stores/      # Zustand stores
+│   │   ├── types/       # TypeScript types
+│   │   └── utils/       # Feature utilities
+│   └── users/           # Users feature
+├── hooks/                # Shared custom hooks
+├── stores/               # Global Zustand stores
+├── services/             # API services and integrations
+│   ├── api/             # Axios instances, interceptors
+│   ├── supabase/        # Supabase client & queries
+│   └── storage/         # LocalStorage, SessionStorage utils
+├── utils/                # Utility functions
+│   ├── helpers/         # Helper functions
+│   ├── validators/      # Validation schemas (Zod)
+│   └── formatters/      # Data formatting utilities
+├── types/                # Global TypeScript types
+│   ├── api.types.ts     # API response types
+│   ├── models.types.ts  # Data models
+│   └── common.types.ts  # Common types
+├── constants/            # App-wide constants
+│   ├── routes.ts        # Route paths
+│   ├── api.ts           # API endpoints
+│   └── config.ts        # App configuration
+├── styles/               # Global styles and theme
+│   ├── theme/           # MUI theme configuration
+│   ├── global.css       # Global CSS
+│   └── variables.css    # CSS variables
+├── assets/               # Static assets
+│   ├── images/          # Images
+│   ├── icons/           # Custom icons
+│   └── fonts/           # Custom fonts
+└── __tests__/            # Test utilities and setup
+    ├── setup.ts         # Test setup
+    ├── mocks/           # MSW handlers
+    └── utils/           # Test utilities
+
+### File Naming Conventions
+
+| File Type | Convention | Example |
+|-----------|-----------|---------|
+| React Components | PascalCase.tsx | `UserProfile.tsx`, `NavigationBar.tsx` |
+| Pages | PascalCase.tsx | `HomePage.tsx`, `LoginPage.tsx` |
+| Hooks | camelCase.ts with 'use' prefix | `useAuth.ts`, `useDebounce.ts` |
+| Utils/Helpers | camelCase.ts | `formatDate.ts`, `apiClient.ts` |
+| Types/Interfaces | PascalCase.types.ts | `User.types.ts`, `api.types.ts` |
+| Constants | UPPER_SNAKE_CASE.ts | `API_ENDPOINTS.ts`, `ROUTES.ts` |
+| Stores (Zustand) | camelCase.store.ts | `auth.store.ts`, `users.store.ts` |
+| Services | camelCase.service.ts | `user.service.ts`, `auth.service.ts` |
+| Tests | *.test.tsx or *.spec.tsx | `UserProfile.test.tsx` |
+| E2E Tests | *.e2e.ts | `login.e2e.ts` |
+| Styles | camelCase.styles.ts | `button.styles.ts` |
+
+### Import Organization Rules
+
+// ✅ CORRECT - Organized imports with clear separation
+// 1. React and core dependencies
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { FC, ReactNode } from 'react';
+
+// 2. Third-party libraries (alphabetically)
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Box, Button, Typography, Stack } from '@mui/material';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// 3. Internal absolute imports - Types
+import type { User, UserProfile } from '@/types';
+
+// 4. Internal absolute imports - Hooks, Stores, Services
+import { useAuth } from '@/hooks';
+import { useUserStore } from '@/stores';
+import { userService } from '@/services';
+
+// 5. Internal absolute imports - Components
+import { FormInput, LoadingSpinner } from '@/components/common';
+import { PageLayout } from '@/components/layout';
+
+// 6. Internal absolute imports - Utils and Constants
+import { formatDate } from '@/utils';
+import { API_ENDPOINTS } from '@/constants';
+
+// 7. Relative imports
+import { UserCard } from './UserCard';
+import type { UserListProps } from './types';
+
+// 8. Assets (last)
+import logoImage from '@/assets/logo.png';
+
+// ❌ INCORRECT - Mixed, unorganized imports
+import logoImage from '@/assets/logo.png';
+import { UserCard } from './UserCard';
+import { useState } from 'react';
+import { Box } from '@mui/material';
+import { useAuth } from '@/hooks';
+
+### Enforcement Criteria
+- ✅ All files must follow the directory structure conventions
+- ✅ Use absolute imports with @ alias for src/ directory
+- ✅ Keep files under 300 lines; split into smaller modules if needed
+- ✅ Colocate related files (component + styles + tests)
+- ✅ Use index.ts for clean exports from feature directories
+- ✅ One component per file (except small sub-components)
+
+---
+
+## 🎨 Code Style & Formatting
+
+### Biome Configuration
+
+**biome.json**
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noExtraBooleanCast": "error",
+        "noMultipleSpacesInRegularExpressionLiterals": "error",
+        "noUselessCatch": "error",
+        "noUselessConstructor": "error",
+        "noUselessFragments": "error",
+        "noUselessLabel": "error",
+        "noUselessRename": "error",
+        "noWith": "error",
+        "useFlatMap": "error",
+        "useOptionalChain": "error",
+        "useSimplifiedLogicExpression": "error"
+      },
+      "correctness": {
+        "noChildrenProp": "error",
+        "noConstAssign": "error",
+        "noConstantCondition": "error",
+        "noEmptyCharacterClassInRegex": "error",
+        "noEmptyPattern": "error",
+        "noInnerDeclarations": "error",
+        "noInvalidConstructorSuper": "error",
+        "noNewSymbol": "error",
+        "noUnreachable": "error",
+        "noUnreachableSuper": "error",
+        "noUnsafeFinally": "error",
+        "noUnsafeOptionalChaining": "error",
+        "noUnusedLabels": "error",
+        "noUnusedVariables": "warn",
+        "useIsNan": "error",
+        "useValidForDirection": "error"
+      },
+      "style": {
+        "noNegationElse": "off",
+        "noParameterAssign": "error",
+        "noRestrictedGlobals": "error",
+        "noVar": "error",
+        "useConst": "error",
+        "useDefaultParameterLast": "error",
+        "useExponentiationOperator": "error"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "noAssignInExpressions": "error",
+        "noAsyncPromiseExecutor": "error",
+        "noCatchAssign": "error",
+        "noClassAssign": "error",
+        "noCommentText": "error",
+        "noCompareNegZero": "error",
+        "noDebugger": "warn",
+        "noDoubleEquals": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noExplicitAny": "warn",
+        "noFallthroughSwitchClause": "error",
+        "noGlobalIsFinite": "error",
+        "noGlobalIsNan": "error",
+        "noImplicitAnyLet": "error",
+        "noMisleadingCharacterClass": "error",
+        "noPrototypeBuiltins": "error",
+        "noRedeclare": "error",
+        "noShadowRestrictedNames": "error",
+        "noSparseArray": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "noUnsafeNegation": "error",
+        "useGetterReturn": "error",
+        "useValidTypeof": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingComma": "es5",
+      "arrowParentheses": "always"
+    }
+  },
+  "organizeImports": {
+    "enabled": true
+  }
+}
+
+### Naming Conventions
+
+**Variables & Functions**
+// ✅ CORRECT - Descriptive, intention-revealing names
+const isUserAuthenticated = checkAuthStatus();
+const filteredActiveUsers = users.filter((user) => user.isActive);
+const totalPrice = calculateOrderTotal(items);
+
+const handleFormSubmit = async (data: FormData) => {
+  // Implementation
+};
+
+const fetchUserProfile = async (userId: string) => {
+  // Implementation
+};
+
+// ❌ INCORRECT - Vague, abbreviated, or misleading names
+const auth = check();
+const data = users.filter((u) => u.act);
+const x = calc(items);
+const submit = async (d) => {};
+const getUserData = async (id) => {}; // Misleading - actually fetches profile
+
+**Constants**
+// ✅ CORRECT - UPPER_SNAKE_CASE for true constants
+export const MAX_RETRY_ATTEMPTS = 3;
+export const API_BASE_URL = import.meta.env.VITE_API_URL;
+export const DEFAULT_PAGE_SIZE = 20;
+export const CACHE_KEYS = {
+  USERS: 'users',
+  POSTS: 'posts',
+} as const;
+
+// Config objects use camelCase
+export const appConfig = {
+  apiTimeout: 5000,
+  enableAnalytics: true,
+  features: {
+    darkMode: true,
+    notifications: false,
+  },
+} as const;
+
+// ❌ INCORRECT
+const maxRetry = 3; // Should be UPPER_SNAKE_CASE
+const Api_Url = '...'; // Mixed case
+const TIMEOUT = 5000; // Too generic
+
+**React Components**
+// ✅ CORRECT - PascalCase, noun-based, descriptive
+export const UserProfileCard: FC<UserProfileCardProps> = ({ user }) => {};
+export const NavigationMenu: FC = () => {};
+export const DataTable: FC<DataTableProps> = () => {};
+
+// ❌ INCORRECT
+export const userprofile = () => {}; // Wrong case
+export const HandleUser = () => {}; // Verb-based
+export const UPC = () => {}; // Abbreviated
+export const component1 = () => {}; // Generic
+
+**TypeScript Types & Interfaces**
+// ✅ CORRECT - PascalCase, descriptive, clear purpose
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
+type ApiResponse<T> = {
+  data: T;
+  status: number;
+  message: string;
+  timestamp: string;
+};
+
+// Props interface with Props suffix
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'outlined';
+  size?: 'small' | 'medium' | 'large';
+  onClick?: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}
+
+// Event handlers use 'Handle' prefix
+type HandleSubmit = (data: FormData) => void;
+type HandleChange = (event: ChangeEvent<HTMLInputElement>) => void;
+
+// ❌ INCORRECT
+interface user {} // Wrong case
+type Response = {}; // Too generic
+interface IButtonProps {} // Hungarian notation (avoid 'I' prefix)
+interface ButtonPropsInterface {} // Redundant 'Interface' suffix
+type Data = any; // Using 'any'
+
+**Boolean Variables**
+// ✅ CORRECT - Use is/has/can/should prefixes
+const isLoading = true;
+const hasPermission = checkPermission();
+const canEdit = user.role === 'admin';
+const shouldShowModal = !isLoading && hasData;
+const wasSuccessful = response.status === 200;
+
+// ❌ INCORRECT
+const loading = true; // Missing 'is' prefix
+const permission = check(); // Not clear it's boolean
+const edit = user.role === 'admin'; // Ambiguous
+
+**Event Handlers**
+// ✅ CORRECT - handle* prefix for handlers
+const handleClick = () => {};
+const handleSubmit = async (data: FormData) => {};
+const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {};
+const handleUserSelect = (userId: string) => {};
+
+// ❌ INCORRECT
+const click = () => {}; // Missing 'handle' prefix
+const onSubmit = () => {}; // Use 'handle' not 'on' for handler functions
+const userSelect = () => {}; // Ambiguous
+
+### Code Formatting Rules
+
+**Spacing & Indentation**
+// ✅ CORRECT - Proper spacing
+const config = {
+  timeout: 5000,
+  retries: 3,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
+
+function calculateTotal(items: Item[]): number {
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const tax = subtotal * 0.1;
+  const shipping = calculateShipping(items);
+  
+  return subtotal + tax + shipping;
+}
+
+// One blank line between logical sections
+const result = calculate();
+
+if (result > 0) {
+  process(result);
+}
+
+// ❌ INCORRECT - Inconsistent spacing
+const config={timeout:5000,retries:3};
+function calculateTotal(items:Item[]):number{
+const subtotal=items.reduce((sum,item)=>sum+item.price,0);const tax=subtotal*0.1;return subtotal+tax;
+}
+
+**Line Length & Breaking**
+// ✅ CORRECT - Break long lines at logical points
+const user = await fetchUserProfile({
+  userId: currentUser.id,
+  includePreferences: true,
+  includeHistory: true,
+});
+
+const isValidUser = 
+  user.isActive &&
+  user.emailVerified &&
+  user.role !== 'guest' &&
+  !user.isBanned;
+
+// Long function chains
+const processedData = rawData
+  .filter((item) => item.isActive)
+  .map((item) => transformItem(item))
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .slice(0, 10);
+
+// ❌ INCORRECT - Exceeds 100 characters
+const user = await fetchUserProfile({ userId: currentUser.id, includePreferences: true, includeHistory: true, includePermissions: true });
+
+const isValidUser = user.isActive && user.emailVerified && user.role !== 'guest' && !user.isBanned && user.createdAt > someDate;
+
+**Arrow Functions**
+// ✅ CORRECT - Parentheses around parameters
+const double = (x: number) => x * 2;
+const sum = (a: number, b: number) => a + b;
+const greet = (name: string) => `Hello, ${name}`;
+
+// Multi-line with explicit return
+const complexCalculation = (data: Data) => {
+  const processed = processData(data);
+  const validated = validateData(processed);
+  return calculateResult(validated);
+};
+
+// ❌ INCORRECT - Inconsistent style
+const double = x => x * 2; // Missing parentheses
+const sum = (a,b) => a+b; // Missing spaces and types
+
+### Enforcement Criteria
+- ✅ Run `npm run format` before committing
+- ✅ Run `npm run lint` to check for issues
+- ✅ Configure editor to format on save with Biome
+- ✅ Max line length: 100 characters
+- ✅ Use 2 spaces for indentation
+- ✅ Always use semicolons
+- ✅ Single quotes for strings
+- ✅ Trailing commas in multi-line structures
+
+---
+
+## 📘 TypeScript Guidelines
+
+### Strict Type Safety
+
+**tsconfig.json Configuration**
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    
+    // Strict Type Checking
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+    
+    // Path Aliases
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+
+### Type vs Interface
+
+**When to Use Interface**
+// ✅ Use INTERFACE for object shapes that might be extended
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Can be extended
+interface AdminUser extends User {
+  permissions: string[];
+  role: 'admin' | 'superadmin';
+}
+
+// Can be declaration merged (useful for library augmentation)
+interface User {
+  createdAt: string;
+}
+
+// Use for React component props
+interface ButtonProps {
+  variant?: 'primary' | 'secondary';
+  onClick?: () => void;
+  children: ReactNode;
+}
+
+**When to Use Type**
+// ✅ Use TYPE for unions, intersections, and complex types
+type Status = 'idle' | 'loading' | 'success' | 'error';
+type ID = string | number;
+
+// Intersection types
+type WithTimestamps = {
+  createdAt: string;
+  updatedAt: string;
+};
+
+type User = {
+  id: string;
+  name: string;
+} & WithTimestamps;
+
+// Conditional types
+type NonNullableFields<T> = {
+  [P in keyof T]: NonNullable<T[P]>;
+};
+
+// Mapped types
+type Readonly<T> = {
+  readonly [P in keyof T]: T[P];
+};
+
+// Function types
+type HandleClick = (event: MouseEvent) => void;
+type ApiCall<T> = (params: RequestParams) => Promise<T>;
+
+// Utility type combinations
+type PartialUser = Partial<User>;
+type RequiredUser = Required<User>;
+type UserKeys = keyof User;
+
+### Type Annotations Best Practices
+
+**Function Parameters & Return Types**
+// ✅ CORRECT - Always annotate parameters and return types
+function calculateDiscount(price: number, discountPercent: number): number {
+  return price * (1 - discountPercent / 100);
+}
+
+const formatUserName = (firstName: string, lastName: string): string => {
+  return `${firstName} ${lastName}`.trim();
+};
+
+async function fetchUser(id: string): Promise<User> {
+  const response = await api.get(`/users/${id}`);
+  return response.data;
+}
+
+// ❌ INCORRECT - Missing type annotations
+function calculateDiscount(price, discountPercent) {
+  return price * (1 - discountPercent / 100);
+}
+
+const formatUserName = (firstName, lastName) => {
+  return `${firstName} ${lastName}`.trim();
+};
+
+**Object & Array Types**
+// ✅ CORRECT - Explicit types
+const user: User = {
+  id: '123',
+  name: 'John Doe',
+  email: 'john@example.com',
+};
+
+const numbers: number[] = [1, 2, 3, 4, 5];
+const users: User[] = [];
+const matrix: number[][] = [[1, 2], [3, 4]];
+
+// Readonly arrays when data shouldn't be mutated
+const ALLOWED_ROLES: readonly string[] = ['admin', 'user', 'guest'];
+
+// ❌ INCORRECT - Using any or missing types
+const user: any = { id: '123' };
+const numbers = [1, 2, 3]; // Inferred but better to be explicit
+const data: any[] = []; // Never use any[]
+
+**Avoid 'any' Type**
+// ✅ CORRECT - Use proper types or unknown
+function processData(data: unknown): ProcessedData {
+  if (isValidData(data)) {
+    return transformData(data);
+  }
+  throw new Error('Invalid data');
+}
+
+// Use generic types for flexibility
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+// Use union types for multiple possibilities
+type ApiResponse = SuccessResponse | ErrorResponse;
+
+// ❌ INCORRECT - Using 'any'
+function processData(data: any) {
+  return data.something; // No type safety
+}
+
+function getProperty(obj: any, key: string): any {
+  return obj[key];
+}
+
+**Type Assertions & Guards**
+// ✅ CORRECT - Type guards for runtime checks
+function isUser(value: unknown): value is User {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    'email' in value
+  );
+}
+
+function processUser(data: unknown) {
+  if (isUser(data)) {
+    // TypeScript knows data is User here
+    console.log(data.email);
+  }
+}
+
+// Discriminated unions
+type ApiResponse =
+  | { status: 'success'; data: User }
+  | { status: 'error'; error: string };
+
+function handleResponse(response: ApiResponse) {
+  if (response.status === 'success') {
+    console.log(response.data); // TypeScript knows this is User
+  } else {
+    console.error(response.error); // TypeScript knows this is string
+  }
+}
+
+// ❌ INCORRECT - Unsafe type assertions
+const user = data as User; // No runtime check
+const element = document.getElementById('root') as HTMLElement; // Could be null
+
+**Null & Undefined Handling**
+// ✅ CORRECT - Handle null/undefined explicitly
+function getUserName(user: User | null): string {
+  return user?.name ?? 'Anonymous';
+}
+
+function processValue(value: string | undefined): string {
+  if (value === undefined) {
+    throw new Error('Value is required');
+  }
+  return value.toUpperCase();
+}
+
+// Optional chaining and nullish coalescing
+const userName = user?.profile?.name ?? 'Unknown';
+const count = items?.length ?? 0;
+
+// ❌ INCORRECT - Not handling null/undefined
+function getUserName(user: User | null): string {
+  return user.name; // Runtime error if null
+}
+
+function processValue(value: string | undefined): string {
+  return value.toUpperCase(); // Runtime error if undefined
+}
+
+### Generic Types
+
+**Generic Functions**
+// ✅ CORRECT - Well-typed generic functions
+function identity<T>(value: T): T {
+  return value;
+}
+
+function firstElement<T>(array: T[]): T | undefined {
+  return array[0];
+}
+
+function mapArray<T, U>(array: T[], fn: (item: T) => U): U[] {
+  return array.map(fn);
+}
+
+// Constrained generics
+function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+function sortBy<T extends { id: string }>(items: T[]): T[] {
+  return items.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+**Generic React Components**
+// ✅ CORRECT - Generic component props
+interface ListProps<T> {
+  items: T[];
+  renderItem: (item: T) => ReactNode;
+  keyExtractor: (item: T) => string;
+}
+
+export function List<T>({ items, renderItem, keyExtractor }: ListProps<T>) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={keyExtractor(item)}>{renderItem(item)}</li>
+      ))}
+    </ul>
+  );
+}
+
+// Usage
+<List
+  items={users}
+  renderItem={(user) => <span>{user.name}</span>}
+  keyExtractor={(user) => user.id}
+/>
+
+### Utility Types
+
+**Built-in Utility Types**
+// Partial - Make all properties optional
+type PartialUser = Partial<User>;
+
+// Required - Make all properties required
+type RequiredUser = Required<User>;
+
+// Readonly - Make all properties readonly
+type ReadonlyUser = Readonly<User>;
+
+// Pick - Select specific properties
+type UserBasicInfo = Pick<User, 'id' | 'name' | 'email'>;
+
+// Omit - Exclude specific properties
+type UserWithoutPassword = Omit<User, 'password'>;
+
+// Record - Create object type with specific keys and value type
+type UserRoles = Record<string, string[]>;
+
+// ReturnType - Extract return type of function
+type FetchUserReturn = ReturnType<typeof fetchUser>;
+
+// Parameters - Extract parameter types
+type FetchUserParams = Parameters<typeof fetchUser>;
+
+**Custom Utility Types**
+// ✅ CORRECT - Useful custom utility types
+type Nullable<T> = T | null;
+type Optional<T> = T | undefined;
+type Maybe<T> = T | null | undefined;
+
+// Deep partial
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+// Non-nullable fields
+type NonNullableFields<T> = {
+  [P in keyof T]: NonNullable<T[P]>;
+};
+
+// Extract keys of specific type
+type KeysOfType<T, U> = {
+  [K in keyof T]: T[K] extends U ? K : never;
+}[keyof T];
+
+// Usage
+type User = {
+  id: string;
+  name: string;
+  age: number;
+  email: string;
+};
+
+type StringKeys = KeysOfType<User, string>; // 'id' | 'name' | 'email'
+
+### Enforcement Criteria
+- ✅ Enable strict mode in tsconfig.json
+- ✅ Never use 'any' type (use 'unknown' if needed)
+- ✅ Always annotate function parameters and return types
+- ✅ Use type guards for runtime type checking
+- ✅ Prefer 'interface' for object shapes, 'type' for unions/complex types
+- ✅ Handle null and undefined explicitly
+- ✅ Use generics for reusable, type-safe components
+- ✅ Leverage utility types instead of manual type manipulation
+
+---
+
+## ⚛️ React Best Practices
+
+### Component Structure
+
+**Functional Components (Required)**
+```typescript
+// ✅ CORRECT - Well-structured functional component
+import type { FC } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+
+// 1. Type definitions
+interface UserProfileProps {
+  userId: string;
+  onUpdate?: (user: User) => void;
+  variant?: 'compact' | 'full';
+}
+
+export const UserProfile: FC<UserProfileProps> = ({
+  userId,
+  onUpdate,
+  variant = 'full',
+}) => {
+  // 2a. State hooks (group by type)
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  
+  // 2b. Query hooks (React Query)
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+  });
+  
+  // 2c. Store hooks (Zustand)
+  const { currentUser } = useAuthStore();
+  
+  // 2d. Custom hooks
+  const { formatDate } = useDateFormatter();
+  
+  // 2e. Computed values (useMemo)
+  const displayName = useMemo(() => {
+    if (!user) return 'Loading...';
+    return `${user.firstName} ${user.lastName}`.trim();
+  }, [user]);
+  
+  const canEdit = useMemo(() => {
+    return currentUser?.id === userId || currentUser?.role === 'admin';
+  }, [currentUser, userId]);
+  
+  // 2f. Effects
+  useEffect(() => {
+    if (user) {
+      console.log('User loaded:', user.id);
+    }
+  }, [user]);
+  
+  // 2g. Event handlers (useCallback)
+  const handleEditClick = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+  
+  const handleSave = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      await updateUser(user);
+      onUpdate?.(user);
+      setIsEditing(false);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Failed to update user:', error);
+    }
+  }, [user, onUpdate]);
+  
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    setHasChanges(false);
+  }, []);
+  
+  // 2h. Early returns (loading, error states)
+  if (isLoading) {
+    return <LoadingSkeleton variant={variant} />;
+  }
+  
+  if (error) {
+    return <ErrorMessage error={error} />;
+  }
+  
+  if (!user) {
+    return <EmptyState message="User not found" />;
+  }
+  
+  // 2i. Main render
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h4">{displayName}</Typography>
+      <Typography variant="body1">{user.email}</Typography>
+      
+      {canEdit && (
+        <Box sx={{ mt: 2 }}>
+          {isEditing ? (
+            <>
+              <Button onClick={handleSave} disabled={!hasChanges}>
+                Save
+              </Button>
+              <Button onClick={handleCancel}>Cancel</Button>
+            </>
+          ) : (
+            <Button onClick={handleEditClick}>Edit</Button>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+// 3. Sub-components (if small and related)
+const LoadingSkeleton: FC<{ variant: 'compact' | 'full' }> = ({ variant }) => (
+  <Box sx={{ p: 2 }}>
+    <Skeleton variant="text" width={variant === 'compact' ? 150 : 250} />
+    <Skeleton variant="text" width={variant === 'compact' ? 100 : 200} />
+  </Box>
+);
+
+// ❌ INCORRECT - Poor component structure
+export const UserProfile = (props) => {
+  const user = useQuery(['user', props.userId], () => fetchUser(props.userId));
+  const [editing, setEditing] = useState(false);
+  
+  const name = user.data ? `${user.data.firstName} ${user.data.lastName}` : '';
+  
+  const edit = () => setEditing(true); // Don't define handlers inline
+  
+  return user.isLoading ? <div>Loading...</div> : (
+    <div>
+      <h1>{name}</h1>
+      <button onClick={() => edit()}>Edit</button>
+    </div>
+  );
+};
+
+### Hooks Rules
+
+**Hook Order & Dependencies**
+// ✅ CORRECT - Consistent hook order and dependencies
+const MyComponent: FC = () => {
+  // 1. State hooks
+  const [count, setCount] = useState(0);
+  const [text, setText] = useState('');
+  
+  // 2. Ref hooks
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // 3. Context hooks
+  const theme = useTheme();
+  
+  // 4. Query hooks
+  const { data } = useQuery(['key'], fetchData);
+  
+  // 5. Custom hooks
+  const { isOnline } = useNetworkStatus();
+  
+  // 6. Memoized values
+  const expensiveValue = useMemo(() => computeExpensive(data), [data]);
+  
+  // 7. Callbacks
+  const handleClick = useCallback(() => {
+    setCount((prev) => prev + 1);
+  }, []);
+  
+  // 8. Effects (last)
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+  
+  return <div>{count}</div>;
+};
+
+// ❌ INCORRECT - Random hook order, conditional hooks
+const MyComponent: FC = () => {
+  const { data } = useQuery(['key'], fetchData);
+  const [count, setCount] = useState(0);
+  
+  if (someCondition) {
+    const [text, setText] = useState(''); // ❌ Conditional hook
+  }
+  
+  useEffect(() => {}, []);
+  const [name, setName] = useState(''); // ❌ Hook after useEffect
+  
+  return <div>{count}</div>;
+};
+
+**Custom Hooks Best Practices**
+// ✅ CORRECT - Well-structured custom hook
+import { useState, useEffect, useCallback } from 'react';
+
+interface UseDebounceOptions {
+  delay?: number;
+  leading?: boolean;
+}
+
+/**
+ * Debounces a value with configurable delay
+ * @param value - The value to debounce
+ * @param options - Debounce configuration
+ * @returns Debounced value
+ */
+export function useDebounce<T>(
+  value: T,
+  options: UseDebounceOptions = {}
+): T {
+  const { delay = 500, leading = false } = options;
+  const [debouncedValue, setDebouncedValue] = useState<T>(
+    leading ? value : value
+  );
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Usage
+const SearchComponent: FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, { delay: 300 });
+  
+  useEffect(() => {
+    if (debouncedSearch) {
+      performSearch(debouncedSearch);
+    }
+  }, [debouncedSearch]);
+  
+  return <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />;
+};
+
+### Component Composition
+
+**Composition Over Props Drilling**
+// ✅ CORRECT - Use composition and context
+import { createContext, useContext } from 'react';
+
+interface UserContextValue {
+  user: User;
+  updateUser: (updates: Partial<User>) => void;
+}
+
+const UserContext = createContext<UserContextValue | null>(null);
+
+export const useUser = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUser must be used within UserProvider');
+  }
+  return context;
+};
+
+export const UserProvider: FC<{ user: User; children: ReactNode }> = ({
+  user,
+  children,
+}) => {
+  const [currentUser, setCurrentUser] = useState(user);
+  
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setCurrentUser((prev) => ({ ...prev, ...updates }));
+  }, []);
+  
+  const value = useMemo(() => ({
+    user: currentUser,
+    updateUser,
+  }), [currentUser, updateUser]);
+  
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+};
+
+// Usage - no props drilling needed
+export const UserDashboard: FC = () => {
+  const { user } = useAuth();
+  
+  return (
+    <UserProvider user={user}>
+      <DashboardLayout>
+        <UserHeader />
+        <UserContent />
+        <UserSidebar />
+      </DashboardLayout>
+    </UserProvider>
+  );
+};
+
+const UserHeader: FC = () => {
+  const { user } = useUser(); // Access without props
+  return <Typography>{user.name}</Typography>;
+};
+
+// ❌ INCORRECT - Props drilling
+export const UserDashboard: FC = () => {
+  const { user } = useAuth();
+  
+  return (
+    <DashboardLayout user={user}>
+      <UserHeader user={user} />
+      <UserContent user={user} />
+      <UserSidebar user={user} />
+    </DashboardLayout>
+  );
+};
+
+**Render Props Pattern**
+// ✅ CORRECT - Render props for flexible rendering
+interface DataFetcherProps<T> {
+  url: string;
+  children: (data: T | null, loading: boolean, error: Error | null) => ReactNode;
+}
+
+function DataFetcher<T>({ url, children }: DataFetcherProps<T>) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['data', url],
+    queryFn: () => fetchData<T>(url),
+  });
+  
+  return <>{children(data ?? null, isLoading, error ?? null)}</>;
+}
+
+// Usage
+<DataFetcher<User> url="/api/user/123">
+  {(user, loading, error) => {
+    if (loading) return <Spinner />;
+    if (error) return <ErrorMessage error={error} />;
+    if (!user) return <EmptyState />;
+    return <UserCard user={user} />;
+  }}
+</DataFetcher>
+
+### Keys in Lists
+
+**Proper Key Usage**
+// ✅ CORRECT - Use stable, unique identifiers
+const UserList: FC<{ users: User[] }> = ({ users }) => (
+  <ul>
+    {users.map((user) => (
+      <UserCard key={user.id} user={user} />
+    ))}
+  </ul>
+);
+
+// For items without IDs, use nanoid or similar
+import { nanoid } from 'nanoid';
+
+const items = useMemo(
+  () => data.map((item) => ({ ...item, key: nanoid() })),
+  [data]
+);
+
+// ❌ INCORRECT - Don't use array index as key
+const UserList: FC<{ users: User[] }> = ({ users }) => (
+  <ul>
+    {users.map((user, index) => (
+      <UserCard key={index} user={user} /> // ❌ Causes re-render issues
+    ))}
+  </ul>
+);
+
+// ❌ INCORRECT - Don't use non-unique or unstable keys
+{users.map((user) => (
+  <UserCard key={Math.random()} user={user} /> // ❌ Changes every render
+))}
+
+{users.map((user) => (
+  <UserCard key={user.email} user={user} /> // ❌ Email might not be unique
+))}
+
+### Enforcement Criteria
+- ✅ Use functional components exclusively (no class components)
+- ✅ Follow hooks rules: top-level only, consistent order, proper dependencies
+- ✅ Name custom hooks with 'use' prefix
+- ✅ Keep components under 300 lines; extract logic to custom hooks
+- ✅ Use composition and context to avoid props drilling
+- ✅ Always use stable, unique keys in lists
+- ✅ Extract sub-components when render logic exceeds ~50 lines
+
+---
+
+## 🚀 Performance Optimization
+
+### Memoization Strategies
+
+**React.memo for Component Memoization**
+// ✅ CORRECT - Memoize components that render frequently with same props
+import { memo } from 'react';
+
+interface UserCardProps {
+  user: User;
+  onSelect: (id: string) => void;
+}
+
+export const UserCard = memo<UserCardProps>(
+  ({ user, onSelect }) => {
+    console.log('UserCard rendered:', user.id);
+    
+    return (
+      <Card onClick={() => onSelect(user.id)}>
+        <Avatar src={user.avatarUrl} alt={user.name} />
+        <Typography variant="h6">{user.name}</Typography>
+        <Typography variant="body2">{user.email}</Typography>
+      </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison - only re-render if user.id or onSelect changes
+    return (
+      prevProps.user.id === nextProps.user.id &&
+      prevProps.onSelect === nextProps.onSelect
+    );
+  }
+);
+
+UserCard.displayName = 'UserCard';
+
+// ❌ INCORRECT - Memoizing simple components unnecessarily
+const SimpleText = memo(() => <Typography>Static Text</Typography>); // Overkill
+
+// ❌ INCORRECT - Memoizing without stable props
+const ParentComponent: FC = () => {
+  return (
+    <UserCard
+      user={user}
+      onSelect={(id) => console.log(id)} // ❌ New function every render
+    />
+  );
+};
+
+**useMemo for Expensive Computations**
+// ✅ CORRECT - Memoize expensive computations
+const UserList: FC<{ users: User[]; searchTerm: string }> = ({
+  users,
+  searchTerm,
+}) => {
+  // Expensive filtering and sorting - memoize it
+  const filteredAndSortedUsers = useMemo(() => {
+    console.log('Computing filtered users...');
+    
+    return users
+      .filter((user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((user) => user.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [users, searchTerm]); // Only recompute when these change
+  
+  // Expensive aggregation
+  const statistics = useMemo(() => {
+    return {
+      total: users.length,
+      active: users.filter((u) => u.isActive).length,
+      premium: users.filter((u) => u.isPremium).length,
+      averageAge: users.reduce((sum, u) => sum + u.age, 0) / users.length,
+    };
+  }, [users]);
+  
+  return (
+    <Box>
+      <Typography>Found {filteredAndSortedUsers.length} users</Typography>
+      <UserStats stats={statistics} />
+      <List>
+        {filteredAndSortedUsers.map((user) => (
+          <UserCard key={user.id} user={user} />
+        ))}
+      </List>
+    </Box>
+  );
+};
+
+// ❌ INCORRECT - Premature optimization
+const SimpleComponent: FC = () => {
+  const value = useMemo(() => 1 + 1, []); // ❌ Overkill
+  const text = useMemo(() => 'Hello', []); // ❌ Overkill
+  const isEmpty = useMemo(() => items.length === 0, [items]); // ❌ Simple check
+  
+  return <div>{value}</div>;
+};
+
+// ❌ INCORRECT - Missing dependencies
+const Component: FC<{ data: Data[] }> = ({ data }) => {
+  const processed = useMemo(() => {
+    return data.filter((item) => item.isActive);
+  }, []); // ❌ Missing 'data' dependency
+  
+  return <div>{processed.length}</div>;
+};
+
+**useCallback for Stable Function References**
+// ✅ CORRECT - useCallback for functions passed to memoized children
+const ParentComponent: FC = () => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
+  
+  // Stable callback reference for memoized child components
+  const handleUserSelect = useCallback((userId: string) => {
+    console.log('User selected:', userId);
+    setSelectedId(userId);
+  }, []); // No dependencies - function doesn't depend on props/state
+  
+  const handleUserDelete = useCallback((userId: string) => {
+    console.log('Deleting user:', userId);
+    // API call to delete user
+  }, []);
+  
+  // Callback with dependencies
+  const handleFilteredSelect = useCallback((userId: string) => {
+    if (filter && selectedId !== userId) {
+      setSelectedId(userId);
+    }
+  }, [filter, selectedId]); // Recompute when filter or selectedId changes
+  
+  return (
+    <Box>
+      <TextField value={filter} onChange={(e) => setFilter(e.target.value)} />
+      {users.map((user) => (
+        <UserCard
+          key={user.id}
+          user={user}
+          onSelect={handleUserSelect}
+          onDelete={handleUserDelete}
+        />
+      ))}
+    </Box>
+  );
+};
+
+// ❌ INCORRECT - Inline functions for memoized children
+const ParentComponent: FC = () => {
+  return (
+    <Box>
+      {users.map((user) => (
+        <UserCard
+          key={user.id}
+          user={user}
+          onSelect={(id) => console.log(id)} // ❌ New function every render
+        />
+      ))}
+    </Box>
+  );
+};
+
+// ❌ INCORRECT - Overusing useCallback
+const Component: FC = () => {
+  // Don't use useCallback for functions not passed to children
+  const logMessage = useCallback(() => {
+    console.log('Message');
+  }, []); // ❌ Unnecessary
+  
+  return <button onClick={logMessage}>Log</button>;
+};
+
+### Code Splitting & Lazy Loading
+
+**Route-based Code Splitting**
+// ✅ CORRECT - Lazy load route components
+import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
+
+// Lazy load heavy page components
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const UserDashboard = lazy(() => import('@/pages/UserDashboard'));
+const AdminPanel = lazy(() => import('@/pages/AdminPanel'));
+const ProfileSettings = lazy(() => import('@/pages/ProfileSettings'));
+const Reports = lazy(() => import('@/pages/Reports'));
+
+// Loading fallback component
+const PageLoader: FC = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
+
+export const AppRouter: FC = () => (
+  <Suspense fallback={<PageLoader />}>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/dashboard" element={<UserDashboard />} />
+      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/settings" element={<ProfileSettings />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </Suspense>
+);
+
+// ❌ INCORRECT - Importing all routes directly
+import { HomePage } from '@/pages/HomePage';
+import { UserDashboard } from '@/pages/UserDashboard';
+import { AdminPanel } from '@/pages/AdminPanel'; // All loaded upfront
+
+**Component-based Code Splitting**
+// ✅ CORRECT - Lazy load heavy, conditional components
+import { lazy, Suspense, useState } from 'react';
+
+const HeavyChart = lazy(() => import('./HeavyChart'));
+const VideoPlayer = lazy(() => import('./VideoPlayer'));
+const DataTable = lazy(() => import('./DataTable'));
+
+export const Dashboard: FC = () => {
+  const [showChart, setShowChart] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  
+  return (
+    <Box>
+      <Button onClick={() => setShowChart(true)}>Show Chart</Button>
+      
+      {showChart && (
+        <Suspense fallback={<Skeleton variant="rectangular" height={400} />}>
+          <HeavyChart />
+        </Suspense>
+      )}
+      
+      <Button onClick={() => setShowVideo(true)}>Play Video</Button>
+      
+      {showVideo && (
+        <Suspense fallback={<CircularProgress />}>
+          <VideoPlayer url="/video.mp4" />
+        </Suspense>
+      )}
+    </Box>
+  );
+};
+
+**Dynamic Imports for Heavy Libraries**
+// ✅ CORRECT - Dynamically import heavy libraries
+const ExportButton: FC<{ data: Data[] }> = ({ data }) => {
+  const [isExporting, setIsExporting] = useState(false);
+  
+  const handleExport = async () => {
+    setIsExporting(true);
+    
+    try {
+      // Import xlsx library only when needed
+      const XLSX = await import('xlsx');
+      
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+      XLSX.writeFile(workbook, 'export.xlsx');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  return (
+    <Button onClick={handleExport} disabled={isExporting}>
+      {isExporting ? 'Exporting...' : 'Export to Excel'}
+    </Button>
+  );
+};
+
+### List Virtualization
+
+**Using react-window for Large Lists**
+// ✅ CORRECT - Virtualize lists with 100+ items
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
+interface VirtualUserListProps {
+  users: User[];
+  onUserSelect: (user: User) => void;
+}
+
+export const VirtualUserList: FC<VirtualUserListProps> = ({
+  users,
+  onUserSelect,
+}) => {
+  const Row = useCallback(
+    ({ index, style }: ListChildComponentProps) => {
+      const user = users[index];
+      
+      return (
+        <div style={style}>
+          <UserCard user={user} onSelect={() => onUserSelect(user)} />
+        </div>
+      );
+    },
+    [users, onUserSelect]
+  );
+  
+  return (
+    <Box sx={{ height: 600, width: '100%' }}>
+      <AutoSizer>
+        {({ height, width }) => (
+          <FixedSizeList
+            height={height}
+            width={width}
+            itemCount={users.length}
+            itemSize={80}
+            overscanCount={5}
+          >
+            {Row}
+          </FixedSizeList>
+        )}
+      </AutoSizer>
+    </Box>
+  );
+};
+
+// For variable height items, use VariableSizeList
+import { VariableSizeList } from 'react-window';
+
+export const VariableHeightList: FC<{ items: Item[] }> = ({ items }) => {
+  const listRef = useRef<VariableSizeList>(null);
+  
+  const getItemSize = (index: number) => {
+    // Calculate height based on item content
+    return items[index].expanded ? 200 : 60;
+  };
+  
+  const Row = ({ index, style }: ListChildComponentProps) => (
+    <div style={style}>
+      <ItemCard item={items[index]} />
+    </div>
+  );
+  
+  return (
+    <VariableSizeList
+      ref={listRef}
+      height={600}
+      width="100%"
+      itemCount={items.length}
+      itemSize={getItemSize}
+    >
+      {Row}
+    </VariableSizeList>
+  );
+};
+
+// ❌ INCORRECT - Rendering large lists without virtualization
+const UserList: FC<{ users: User[] }> = ({ users }) => (
+  <Box>
+    {users.map((user) => ( // ❌ Renders all 1000+ items
+      <UserCard key={user.id} user={user} />
+    ))}
+  </Box>
+);
+
+### Image Optimization
+
+**Lazy Loading Images**
+// ✅ CORRECT - Lazy load images with placeholder
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import 'react-lazy-load-image-component/src/effects/blur.css';
+
+interface UserAvatarProps {
+  src: string;
+  alt: string;
+  size?: number;
+}
+
+export const UserAvatar: FC<UserAvatarProps> = ({
+  src,
+  alt,
+  size = 100,
+}) => (
+  <LazyLoadImage
+    src={src}
+    alt={alt}
+    effect="blur"
+    placeholderSrc="/placeholder-avatar.jpg"
+    width={size}
+    height={size}
+    style={{ borderRadius: '50%' }}
+    threshold={100} // Load 100px before entering viewport
+  />
+);
+
+// Using native loading attribute
+export const OptimizedImage: FC<{ src: string; alt: string }> = ({
+  src,
+  alt,
+}) => (
+  <img
+    src={src}
+    alt={alt}
+    loading="lazy" // Native lazy loading
+    decoding="async" // Async decode
+    style={{ maxWidth: '100%', height: 'auto' }}
+  />
+);
+
+// ❌ INCORRECT - Loading all images immediately
+export const Gallery: FC<{ images: string[] }> = ({ images }) => (
+  <Box>
+    {images.map((src, index) => (
+      <img key={index} src={src} alt="" /> // ❌ All load immediately
+    ))}
+  </Box>
+);
+
+### Preventing Unnecessary Re-renders
+
+**Stable References**
+// ✅ CORRECT - Stable object/array references
+const ParentComponent: FC = () => {
+  const [count, setCount] = useState(0);
+  
+  // Stable config object
+  const config = useMemo(
+    () => ({
+      theme: 'dark',
+      locale: 'en',
+      features: {
+        analytics: true,
+        notifications: false,
+      },
+    }),
+    []
+  );
+  
+  // Stable array reference
+  const defaultOptions = useMemo(() => ['option1', 'option2', 'option3'], []);
+  
+  // Stable callback
+  const handleClick = useCallback(() => {
+    console.log('Clicked');
+  }, []);
+  
+  return (
+    <>
+      <Button onClick={handleClick}>Click ({count})</Button>
+      <ExpensiveComponent config={config} />
+      <OptionsSelector options={defaultOptions} />
+    </>
+  );
+};
+
+// ❌ INCORRECT - New references on every render
+const ParentComponent: FC = () => {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <>
+      {/* ❌ New function every render */}
+      <Button onClick={() => console.log('Clicked')}>Click</Button>
+      
+      {/* ❌ New object every render */}
+      <ExpensiveComponent config={{ theme: 'dark', locale: 'en' }} />
+      
+      {/* ❌ New array every render */}
+      <OptionsSelector options={['option1', 'option2']} />
+      
+      <div>{count}</div>
+    </>
+  );
+};
+
+**React DevTools Profiler Usage**
+// ✅ CORRECT - Use Profiler to identify performance bottlenecks
+import { Profiler, ProfilerOnRenderCallback } from 'react';
+
+const onRenderCallback: ProfilerOnRenderCallback = (
+  id,
+  phase,
+  actualDuration,
+  baseDuration,
+  startTime,
+  commitTime
+) => {
+  console.log(`${id} (${phase}) took ${actualDuration}ms`);
+  
+  // Log to analytics in production
+  if (actualDuration > 16) {
+    // Longer than 1 frame (60fps)
+    console.warn(`Slow render in ${id}: ${actualDuration}ms`);
+  }
+};
+
+export const App: FC = () => (
+  <Profiler id="App" onRender={onRenderCallback}>
+    <Router>
+      <AppContent />
+    </Router>
+  </Profiler>
+);
+
+// Profile specific expensive components
+export const Dashboard: FC = () => (
+  <Profiler id="Dashboard" onRender={onRenderCallback}>
+    <DashboardContent />
+  </Profiler>
+);
+
+### Enforcement Criteria
+- ✅ Use React.memo for components in lists or with frequent re-renders
+- ✅ Memoize expensive computations (> 5ms) with useMemo
+- ✅ Use useCallback for callbacks passed to memoized children
+- ✅ Lazy load routes and heavy components
+- ✅ Virtualize lists with 100+ items using react-window
+- ✅ Lazy load images below the fold
+- ✅ Profile with React DevTools before optimizing
+- ✅ Keep render time under 16ms (60fps) for smooth UI
+- ✅ Avoid premature optimization - measure first
+
+---
+
+## 📦 State Management
+
+### When to Use Which State Solution
+
+**Decision Matrix**
+
+| State Type | Solution | Example |
+|-----------|----------|---------|
+| Component-local UI | `useState` | Modal open/close, form input values |
+| Shared UI state | Zustand | Theme, sidebar collapsed, notifications |
+| Server/API data | React Query | User data, posts, comments |
+| URL state | React Router | Current page, filters, search params |
+| Form state | React Hook Form | Form inputs, validation, submission |
+
+### Local State (useState)
+
+**Component-Local State**
+// ✅ CORRECT - Use useState for component-local UI state
+const SearchBar: FC = () => {
+  const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  const debouncedQuery = useDebounce(query, 300);
+  
+  useEffect(() => {
+    if (debouncedQuery) {
+      fetchSuggestions(debouncedQuery).then(setSuggestions);
+    } else {
+      setSuggestions([]);
+    }
+  }, [debouncedQuery]);
+  
+  return (
+    <TextField
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
+      placeholder="Search..."
+    />
+  );
+};
+
+// Modal state
+const UserProfile: FC = () => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+  
+  return (
+    <>
+      <Button onClick={() => setIsEditModalOpen(true)}>Edit</Button>
+      <EditModal 
+        open={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+      />
+    </>
+  );
+};
+
+// ❌ INCORRECT - Don't use useState for server data
+const UserProfile: FC<{ userId: string }> = ({ userId }) => {
+  const [user, setUser] = useState<User | null>(null); // ❌ Use React Query
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    setLoading(true);
+    fetchUser(userId)
+      .then(setUser)
+      .finally(() => setLoading(false));
+  }, [userId]);
+  
+  return <div>{user?.name}</div>;
+};
+
+**Complex State with useReducer**
+// ✅ CORRECT - Use useReducer for complex state logic
+interface FilterState {
+  search: string;
+  category: string | null;
+  status: 'all' | 'active' | 'inactive';
+  sortBy: 'name' | 'date';
+  sortOrder: 'asc' | 'desc';
+}
+
+type FilterAction =
+  | { type: 'SET_SEARCH'; payload: string }
+  | { type: 'SET_CATEGORY'; payload: string | null }
+  | { type: 'SET_STATUS'; payload: FilterState['status'] }
+  | { type: 'SET_SORT'; payload: { by: FilterState['sortBy']; order: FilterState['sortOrder'] } }
+  | { type: 'RESET_FILTERS' };
+
+const initialState: FilterState = {
+  search: '',
+  category: null,
+  status: 'all',
+  sortBy: 'name',
+  sortOrder: 'asc',
+};
+
+function filterReducer(state: FilterState, action: FilterAction): FilterState {
+  switch (action.type) {
+    case 'SET_SEARCH':
+      return { ...state, search: action.payload };
+    case 'SET_CATEGORY':
+      return { ...state, category: action.payload };
+    case 'SET_STATUS':
+      return { ...state, status: action.payload };
+    case 'SET_SORT':
+      return { ...state, sortBy: action.payload.by, sortOrder: action.payload.order };
+    case 'RESET_FILTERS':
+      return initialState;
+    default:
+      return state;
+  }
+}
+
+const UserList: FC = () => {
+  const [filters, dispatch] = useReducer(filterReducer, initialState);
+  
+  return (
+    <Box>
+      <TextField
+        value={filters.search}
+        onChange={(e) => dispatch({ type: 'SET_SEARCH', payload: e.target.value })}
+      />
+      <Button onClick={() => dispatch({ type: 'RESET_FILTERS' })}>
+        Reset Filters
+      </Button>
+    </Box>
+  );
+};
+
+### Global State (Zustand)
+
+**Store Setup with TypeScript**
+// ✅ CORRECT - Well-structured Zustand store
+// stores/auth.store.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user' | 'guest';
+  avatarUrl?: string;
+}
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface AuthActions {
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
+}
+
+type AuthStore = AuthState & AuthActions;
+
+export const useAuthStore = create<AuthStore>()(
+  devtools(
+    persist(
+      immer((set, get) => ({
+        // Initial state
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+
+        // Actions
+        login: async (email: string, password: string) => {
+          set((state) => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
+            const { user, token } = await authService.login(email, password);
+            
+            set((state) => {
+              state.user = user;
+              state.token = token;
+              state.isAuthenticated = true;
+              state.isLoading = false;
+            });
+          } catch (error) {
+            set((state) => {
+              state.error = error instanceof Error ? error.message : 'Login failed';
+              state.isLoading = false;
+            });
+          }
+        },
+
+        logout: () => {
+          set((state) => {
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+            state.error = null;
+          });
+          
+          // Clear persisted state
+          localStorage.removeItem('auth-storage');
+        },
+
+        updateUser: (updates: Partial<User>) => {
+          set((state) => {
+            if (state.user) {
+              state.user = { ...state.user, ...updates };
+            }
+          });
+        },
+
+        clearError: () => {
+          set((state) => {
+            state.error = null;
+          });
+        },
+
+        setLoading: (loading: boolean) => {
+          set((state) => {
+            state.isLoading = loading;
+          });
+        },
+      })),
+      {
+        name: 'auth-storage',
+        partialize: (state) => ({
+          user: state.user,
+          token: state.token,
+          isAuthenticated: state.isAuthenticated,
+        }),
+      }
+    ),
+    { name: 'AuthStore' }
+  )
+);
+
+// Selectors for optimized re-renders
+export const useUser = () => useAuthStore((state) => state.user);
+export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
+export const useAuthActions = () => useAuthStore((state) => ({
+  login: state.login,
+  logout: state.logout,
+  updateUser: state.updateUser,
+}));
+
+**UI State Store**
+// ✅ CORRECT - UI state store
+// stores/ui.store.ts
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+
+interface Notification {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+}
+
+interface UIState {
+  theme: 'light' | 'dark';
+  sidebarOpen: boolean;
+  notifications: Notification[];
+  isOnline: boolean;
+}
+
+interface UIActions {
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleSidebar: () => void;
+  setSidebarOpen: (open: boolean) => void;
+  addNotification: (notification: Omit<Notification, 'id'>) => void;
+  removeNotification: (id: string) => void;
+  clearNotifications: () => void;
+  setOnlineStatus: (isOnline: boolean) => void;
+}
+
+type UIStore = UIState & UIActions;
+
+export const useUIStore = create<UIStore>()(
+  devtools(
+    persist(
+      (set) => ({
+        // State
+        theme: 'light',
+        sidebarOpen: true,
+        notifications: [],
+        isOnline: navigator.onLine,
+
+        // Actions
+        toggleTheme: () =>
+          set((state) => ({
+            theme: state.theme === 'light' ? 'dark' : 'light',
+          })),
+
+        setTheme: (theme) => set({ theme }),
+
+        toggleSidebar: () =>
+          set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+
+        setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
+        addNotification: (notification) =>
+          set((state) => ({
+            notifications: [
+              ...state.notifications,
+              { ...notification, id: nanoid() },
+            ],
+          })),
+
+        removeNotification: (id) =>
+          set((state) => ({
+            notifications: state.notifications.filter((n) => n.id !== id),
+          })),
+
+        clearNotifications: () => set({ notifications: [] }),
+
+        setOnlineStatus: (isOnline) => set({ isOnline }),
+      }),
+      {
+        name: 'ui-storage',
+        partialize: (state) => ({
+          theme: state.theme,
+          sidebarOpen: state.sidebarOpen,
+        }),
+      }
+    ),
+    { name: 'UIStore' }
+  )
+);
+
+// Usage in components
+const Header: FC = () => {
+  const theme = useUIStore((state) => state.theme);
+  const toggleTheme = useUIStore((state) => state.toggleTheme);
+  
+  return (
+    <IconButton onClick={toggleTheme}>
+      {theme === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+    </IconButton>
+  );
+};
+
+### Server State (React Query)
+
+**Query Patterns**
+// ✅ CORRECT - React Query patterns
+// hooks/useUsers.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { userService } from '@/services';
+
+// Query keys factory
+export const userKeys = {
+  all: ['users'] as const,
+  lists: () => [...userKeys.all, 'list'] as const,
+  list: (filters: string) => [...userKeys.lists(), { filters }] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
+};
+
+// Fetch single user
+export function useUser(userId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: userKeys.detail(userId),
+    queryFn: () => userService.getUser(userId),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: options?.enabled ?? true,
+  });
+}
+
+// Fetch users list with filters
+interface UsersFilter {
+  search?: string;
+  role?: string;
+  status?: string;
+}
+
+export function useUsers(filters: UsersFilter = {}) {
+  const filterString = JSON.stringify(filters);
+  
+  return useQuery({
+    queryKey: userKeys.list(filterString),
+    queryFn: () => userService.getUsers(filters),
+    staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching
+  });
+}
+
+// Infinite query for pagination
+export function useInfiniteUsers(filters: UsersFilter = {}) {
+  return useInfiniteQuery({
+    queryKey: [...userKeys.lists(), 'infinite', filters],
+    queryFn: ({ pageParam = 1 }) =>
+      userService.getUsers({ ...filters, page: pageParam }),
+    getNextPageParam: (lastPage, pages) => {
+      if (lastPage.hasMore) {
+        return pages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+}
+
+// Create user mutation
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (newUser: CreateUserInput) => userService.createUser(newUser),
+    onMutate: async (newUser) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
+      
+      // Snapshot previous value
+      const previousUsers = queryClient.getQueryData(userKeys.lists());
+      
+      // Optimistically update
+      queryClient.setQueryData(userKeys.lists(), (old: User[] = []) => [
+        ...old,
+        { ...newUser, id: 'temp-id', createdAt: new Date().toISOString() },
+      ]);
+      
+      return { previousUsers };
+    },
+    onError: (error, newUser, context) => {
+      // Rollback on error
+      if (context?.previousUsers) {
+        queryClient.setQueryData(userKeys.lists(), context.previousUsers);
+      }
+      console.error('Failed to create user:', error);
+    },
+    onSuccess: (createdUser) => {
+      // Update with real data
+      queryClient.setQueryData(userKeys.detail(createdUser.id), createdUser);
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+// Update user mutation
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<User> }) =>
+      userService.updateUser(id, updates),
+    onSuccess: (updatedUser) => {
+      // Update specific user in cache
+      queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
+      
+      // Update user in lists
+      queryClient.setQueriesData(
+        { queryKey: userKeys.lists() },
+        (oldData: User[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((user) =>
+            user.id === updatedUser.id ? updatedUser : user
+          );
+        }
+      );
+    },
+  });
+}
+
+// Delete user mutation
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (userId: string) => userService.deleteUser(userId),
+    onSuccess: (_, userId) => {
+      // Remove from cache
+      queryClient.removeQueries({ queryKey: userKeys.detail(userId) });
+      
+      // Remove from lists
+      queryClient.setQueriesData(
+        { queryKey: userKeys.lists() },
+        (oldData: User[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.filter((user) => user.id !== userId);
+        }
+      );
+    },
+  });
+}
+
+// Usage in components
+const UserProfile: FC<{ userId: string }> = ({ userId }) => {
+  const { data: user, isLoading, error } = useUser(userId);
+  const updateMutation = useUpdateUser();
+  const deleteMutation = useDeleteUser();
+  
+  const handleUpdate = () => {
+    updateMutation.mutate({
+      id: userId,
+      updates: { name: 'New Name' },
+    });
+  };
+  
+  const handleDelete = () => {
+    deleteMutation.mutate(userId);
+  };
+  
+  if (isLoading) return <CircularProgress />;
+  if (error) return <Alert severity="error">Failed to load user</Alert>;
+  if (!user) return <Alert severity="info">User not found</Alert>;
+  
+  return (
+    <Box>
+      <Typography variant="h4">{user.name}</Typography>
+      <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+        Update
+      </Button>
+      <Button onClick={handleDelete} disabled={deleteMutation.isPending}>
+        Delete
+      </Button>
+    </Box>
+  );
+};
+
+**Dependent Queries**
+// ✅ CORRECT - Dependent queries
+const UserDashboard: FC<{ userId: string }> = ({ userId }) => {
+  // First query
+  const { data: user } = useUser(userId);
+  
+  // Second query depends on first
+  const { data: posts } = useQuery({
+    queryKey: ['posts', user?.id],
+    queryFn: () => postService.getUserPosts(user!.id),
+    enabled: !!user, // Only run if user exists
+  });
+  
+  // Third query depends on second
+  const { data: stats } = useQuery({
+    queryKey: ['stats', posts?.[0]?.id],
+    queryFn: () => statsService.getPostStats(posts![0].id),
+    enabled: !!posts && posts.length > 0,
+  });
+  
+  return <div>{/* Render data */}</div>;
+};
+
+### Enforcement Criteria
+- ✅ Use useState for component-local UI state only
+- ✅ Use useReducer for complex state logic with multiple actions
+- ✅ Use Zustand for global app state (theme, auth, UI preferences)
+- ✅ Use React Query for ALL server state (API data)
+- ✅ Never mix server state with useState/useReducer
+- ✅ Implement optimistic updates for mutations
+- ✅ Use query key factories for consistent cache keys
+- ✅ Set appropriate staleTime and gcTime values
+- ✅ Handle loading, error, and empty states properly
+
+---
+
+## 🧪 Testing Standards
+
+### Unit Testing (Vitest)
+
+**Test File Structure**
+// ✅ CORRECT - Well-structured unit tests
+// utils/formatters.test.ts
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { formatCurrency, formatDate, calculateDiscount } from './formatters';
+
+describe('formatCurrency', () => {
+  it('formats USD currency correctly', () => {
+    expect(formatCurrency(1234.56, 'USD')).toBe('$1,234.56');
+  });
+  
+  it('formats EUR currency correctly', () => {
+    expect(formatCurrency(1234.56, 'EUR')).toBe('€1,234.56');
+  });
+  
+  it('handles zero amount', () => {
+    expect(formatCurrency(0, 'USD')).toBe('$0.00');
+  });
+  
+  it('handles negative amounts', () => {
+    expect(formatCurrency(-1234.56, 'USD')).toBe('-$1,234.56');
+  });
+  
+  it('rounds to two decimal places', () => {
+    expect(formatCurrency(1234.567, 'USD')).toBe('$1,234.57');
+  });
+});
+
+describe('formatDate', () => {
+  beforeEach(() => {
+    // Mock timezone
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+  });
+  
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  
+  it('formats date in default format', () => {
+    const date = new Date('2024-01-15T10:30:00Z');
+    expect(formatDate(date)).toBe('Jan 15, 2024');
+  });
+  
+  it('formats date with custom format', () => {
+    const date = new Date('2024-01-15T10:30:00Z');
+    expect(formatDate(date, 'yyyy-MM-dd')).toBe('2024-01-15');
+  });
+  
+  it('handles invalid date', () => {
+    expect(formatDate(new Date('invalid'))).toBe('Invalid Date');
+  });
+});
+
+describe('calculateDiscount', () => {
+  it('calculates percentage discount correctly', () => {
+    expect(calculateDiscount(100, 20)).toBe(80);
+  });
+  
+  it('handles zero discount', () => {
+    expect(calculateDiscount(100, 0)).toBe(100);
+  });
+  
+  it('handles 100% discount', () => {
+    expect(calculateDiscount(100, 100)).toBe(0);
+  });
+  
+  it('throws error for invalid percentage', () => {
+    expect(() => calculateDiscount(100, -10)).toThrow('Invalid discount');
+    expect(() => calculateDiscount(100, 150)).toThrow('Invalid discount');
+  });
+});
+
+// ❌ INCORRECT - Poor test structure
+describe('tests', () => {
+  it('works', () => {
+    expect(formatCurrency(100, 'USD')).toBeTruthy(); // Too vague
+  });
+  
+  it('test 2', () => { // Non-descriptive name
+    const result = calculateDiscount(100, 20);
+    expect(result).toBe(80);
+    expect(formatDate(new Date())).toBeTruthy(); // Testing multiple things
+  });
+});
+
+**Component Testing (Testing Library)**
+// ✅ CORRECT - Component testing best practices
+// components/UserCard.test.tsx
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { UserCard } from './UserCard';
+import type { User } from '@/types';
+
+const mockUser: User = {
+  id: '1',
+  name: 'John Doe',
+  email: 'john@example.com',
+  avatarUrl: 'https://example.com/avatar.jpg',
+  role: 'user',
+  isActive: true,
+};
+
+describe('UserCard', () => {
+  it('renders user information correctly', () => {
+    render(<UserCard user={mockUser} />);
+    
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'John Doe' })).toHaveAttribute(
+      'src',
+      mockUser.avatarUrl
+    );
+  });
+  
+  it('calls onSelect when card is clicked', async () => {
+    const handleSelect = vi.fn();
+    const user = userEvent.setup();
+    
+    render(<UserCard user={mockUser} onSelect={handleSelect} />);
+    
+    await user.click(screen.getByRole('button', { name: /view profile/i }));
+    
+    expect(handleSelect).toHaveBeenCalledWith(mockUser.id);
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+  });
+  
+  it('shows active badge for active users', () => {
+    render(<UserCard user={mockUser} />);
+    
+    expect(screen.getByText(/active/i)).toBeInTheDocument();
+  });
+  
+  it('does not show active badge for inactive users', () => {
+    const inactiveUser = { ...mockUser, isActive: false };
+    render(<UserCard user={inactiveUser} />);
+    
+    expect(screen.queryByText(/active/i)).not.toBeInTheDocument();
+  });
+  
+  it('shows admin badge for admin users', () => {
+    const adminUser = { ...mockUser, role: 'admin' as const };
+    render(<UserCard user={adminUser} />);
+    
+    expect(screen.getByText(/admin/i)).toBeInTheDocument();
+  });
+  
+  it('disables actions when user is inactive', () => {
+    const inactiveUser = { ...mockUser, isActive: false };
+    render(<UserCard user={inactiveUser} />);
+    
+    const viewButton = screen.getByRole('button', { name: /view profile/i });
+    expect(viewButton).toBeDisabled();
+  });
+});
+
+// Testing with React Query
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  });
+}
+
+function renderWithQueryClient(ui: React.ReactElement) {
+  const testQueryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={testQueryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
+
+describe('UserProfile with React Query', () => {
+  it('shows loading state', () => {
+    renderWithQueryClient(<UserProfile userId="1" />);
+    
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+  
+  it('displays user data after loading', async () => {
+    // Mock API response
+    server.use(
+      http.get('/api/users/1', () => {
+        return HttpResponse.json(mockUser);
+      })
+    );
+    
+    renderWithQueryClient(<UserProfile userId="1" />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+  });
+  
+  it('shows error message on fetch failure', async () => {
+    server.use(
+      http.get('/api/users/1', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+    
+    renderWithQueryClient(<UserProfile userId="1" />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/failed to load user/i)).toBeInTheDocument();
+    });
+  });
+});
+
+**MSW API Mocking**
+// ✅ CORRECT - MSW setup for testing
+// __tests__/mocks/handlers.ts
+import { http, HttpResponse } from 'msw';
+import type { User } from '@/types';
+
+const mockUsers: User[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    role: 'user',
+    isActive: true,
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    role: 'admin',
+    isActive: true,
+  },
+];
+
+export const handlers = [
+  // Get all users
+  http.get('/api/users', ({ request }) => {
+    const url = new URL(request.url);
+    const search = url.searchParams.get('search');
+    
+    let filteredUsers = mockUsers;
+    
+    if (search) {
+      filteredUsers = mockUsers.filter((user) =>
+        user.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    return HttpResponse.json(filteredUsers);
+  }),
+  
+  // Get user by ID
+  http.get('/api/users/:id', ({ params }) => {
+    const { id } = params;
+    const user = mockUsers.find((u) => u.id === id);
+    
+    if (!user) {
+      return new HttpResponse(null, {
+        status: 404,
+        statusText: 'User not found',
+      });
+    }
+    
+    return HttpResponse.json(user);
+  }),
+  
+  // Create user
+  http.post('/api/users', async ({ request }) => {
+    const newUser = await request.json() as Omit<User, 'id'>;
+    const createdUser: User = {
+      ...newUser,
+      id: String(mockUsers.length + 1),
+    };
+    
+    mockUsers.push(createdUser);
+    
+    return HttpResponse.json(createdUser, { status: 201 });
+  }),
+  
+  // Update user
+  http.patch('/api/users/:id', async ({ params, request }) => {
+    const { id } = params;
+    const updates = await request.json() as Partial<User>;
+    const userIndex = mockUsers.findIndex((u) => u.id === id);
+    
+    if (userIndex === -1) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    
+    mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
+    
+    return HttpResponse.json(mockUsers[userIndex]);
+  }),
+  
+  // Delete user
+  http.delete('/api/users/:id', ({ params }) => {
+    const { id } = params;
+    const userIndex = mockUsers.findIndex((u) => u.id === id);
+    
+    if (userIndex === -1) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    
+    mockUsers.splice(userIndex, 1);
+    
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
+// __tests__/setup.ts
+import { afterAll, afterEach, beforeAll } from 'vitest';
+import { setupServer } from 'msw/node';
+import { handlers } from './mocks/handlers';
+import '@testing-library/jest-dom';
+
+export const server = setupServer(...handlers);
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+**Hook Testing**
+```typescript
+// ✅ CORRECT - Testing custom hooks
+// hooks/useDebounce.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { useDebounce } from './useDebounce';
+
+describe('useDebounce', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+  
+  it('returns initial value immediately', () => {
+    const { result } = renderHook(() => useDebounce('initial', 500));
+    
+    expect(result.current).toBe('initial');
+  });
+  
+  it('debounces value changes', async () => {
+    const { result, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: 'initial', delay: 500 } }
+    );
+    
+    expect(result.current).toBe('initial');
+    
+    // Change value
+    rerender({ value: 'updated', delay: 500 });
+    
+    // Should still be
