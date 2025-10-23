@@ -1,0 +1,870 @@
+---
+alwaysApply: true
+---
+
+# React Performance Optimization Rules
+
+## Component Optimization
+
+### Rule: Use React.memo for Pure Components
+Wrap functional components that receive the same props frequently to prevent unnecessary re-renders.
+
+// ✅ Good - Memoized component
+const ExpensiveComponent = React.memo(({ data, onAction }) => {
+  return <div>{/* Complex rendering logic */}</div>;
+});
+
+// ❌ Bad - Re-renders on every parent update
+const ExpensiveComponent = ({ data, onAction }) => {
+  return <div>{/* Complex rendering logic */}</div>;
+};
+
+### Rule: Implement useMemo for Expensive Computations
+Cache expensive calculations that don't need to run on every render.
+
+// ✅ Good - Memoized computation
+const sortedData = useMemo(() => {
+  return data.sort((a, b) => a.value - b.value);
+}, [data]);
+
+// ❌ Bad - Recalculates on every render
+const sortedData = data.sort((a, b) => a.value - b.value);
+
+### Rule: Apply useCallback for Function Memoization
+Memoize callback functions passed to child components to prevent re-renders.
+
+// ✅ Good - Memoized callback
+const handleClick = useCallback(() => {
+  doSomething(id);
+}, [id]);
+
+// ❌ Bad - New function reference on every render
+const handleClick = () => {
+  doSomething(id);
+};
+
+### Rule: Prefer Functional Components with Hooks
+Use functional components for better optimization opportunities and cleaner code.
+
+// ✅ Good - Functional component with hooks
+const UserProfile = ({ userId }) => {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    fetchUser(userId).then(setUser);
+  }, [userId]);
+  
+  return <div>{user?.name}</div>;
+};
+
+// ⚠️ Legacy - Class component (use only when necessary)
+class UserProfile extends React.PureComponent {
+  // ...
+}
+
+---
+
+## Code Splitting & Lazy Loading
+
+### Rule: Use React.lazy and Suspense for Route-Based Code Splitting
+Lazy load route components to reduce initial bundle size.
+
+// ✅ Good - Lazy loaded routes
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+
+function App() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+// ❌ Bad - All routes bundled together
+import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
+
+### Rule: Implement Dynamic Imports for Heavy Components
+Load heavy components only when needed.
+
+// ✅ Good - Dynamic import with loading state
+const HeavyChart = React.lazy(() => import('./components/HeavyChart'));
+
+const Analytics = () => {
+  const [showChart, setShowChart] = useState(false);
+  
+  return (
+    <div>
+      <button onClick={() => setShowChart(true)}>Show Chart</button>
+      {showChart && (
+        <Suspense fallback={<Spinner />}>
+          <HeavyChart />
+        </Suspense>
+      )}
+    </div>
+  );
+};
+
+### Rule: Split Third-Party Libraries Strategically
+Separate vendor bundles from application code for better caching.
+
+// webpack.config.js or vite.config.js
+optimization: {
+  splitChunks: {
+    chunks: 'all',
+    cacheGroups: {
+      vendor: {
+        test: /[\\/]node_modules[\\/]/,
+        name: 'vendors',
+        priority: 10
+      },
+      common: {
+        minChunks: 2,
+        priority: 5,
+        reuseExistingChunk: true
+      }
+    }
+  }
+}
+
+---
+
+## List Rendering
+
+### Rule: Use react-window or react-virtualized for Large Lists
+Virtualize lists with 100+ items to render only visible elements.
+
+// ✅ Good - Virtualized list with react-window
+import { FixedSizeList } from 'react-window';
+
+const VirtualizedList = ({ items }) => (
+  <FixedSizeList
+    height={600}
+    itemCount={items.length}
+    itemSize={50}
+    width="100%"
+  >
+    {({ index, style }) => (
+      <div style={style}>{items[index].name}</div>
+    )}
+  </FixedSizeList>
+);
+
+// ❌ Bad - Rendering 10,000 items at once
+const RegularList = ({ items }) => (
+  <div>
+    {items.map(item => <div key={item.id}>{item.name}</div>)}
+  </div>
+);
+
+### Rule: Always Provide Unique, Stable Keys
+Use stable, unique identifiers for list items, never array indices.
+
+// ✅ Good - Unique, stable keys
+{users.map(user => (
+  <UserCard key={user.id} user={user} />
+))}
+
+// ❌ Bad - Index as key (causes re-render issues)
+{users.map((user, index) => (
+  <UserCard key={index} user={user} />
+))}
+
+// ❌ Bad - Non-stable generated keys
+{users.map(user => (
+  <UserCard key={Math.random()} user={user} />
+))}
+
+### Rule: Implement Windowing for Performance-Critical Lists
+For infinite scroll or large datasets, implement windowing.
+
+// ✅ Good - Windowed infinite scroll
+import { VariableSizeList } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
+
+const InfiniteList = ({ loadMoreItems, hasNextPage, items }) => (
+  <InfiniteLoader
+    isItemLoaded={index => index < items.length}
+    itemCount={hasNextPage ? items.length + 1 : items.length}
+    loadMoreItems={loadMoreItems}
+  >
+    {({ onItemsRendered, ref }) => (
+      <VariableSizeList
+        height={600}
+        itemCount={items.length}
+        onItemsRendered={onItemsRendered}
+        ref={ref}
+        width="100%"
+        itemSize={index => 80}
+      >
+        {Row}
+      </VariableSizeList>
+    )}
+  </InfiniteLoader>
+);
+
+---
+
+## State Management
+
+### Rule: Keep State Local When Possible
+Don't lift state unnecessarily; keep it close to where it's used.
+
+// ✅ Good - Local state
+const SearchBox = () => {
+  const [query, setQuery] = useState('');
+  return <input value={query} onChange={e => setQuery(e.target.value)} />;
+};
+
+// ❌ Bad - Unnecessary global state for local UI
+// Redux store
+const searchQuery = useSelector(state => state.ui.searchQuery);
+const dispatch = useDispatch();
+
+### Rule: Use Reselect for Redux Selector Memoization
+Memoize expensive Redux selectors to prevent recalculations.
+
+// ✅ Good - Memoized selector with Reselect
+import { createSelector } from 'reselect';
+
+const selectItems = state => state.items;
+const selectFilter = state => state.filter;
+
+export const selectFilteredItems = createSelector(
+  [selectItems, selectFilter],
+  (items, filter) => items.filter(item => item.type === filter)
+);
+
+// ❌ Bad - Recalculates on every state change
+const selectFilteredItems = state => 
+  state.items.filter(item => item.type === state.filter);
+
+### Rule: Implement Immutable Data Patterns
+Use immutable update patterns for state to enable shallow equality checks.
+
+// ✅ Good - Immutable updates
+setState(prevState => ({
+  ...prevState,
+  users: prevState.users.map(user =>
+    user.id === userId ? { ...user, name: newName } : user
+  )
+}));
+
+// ❌ Bad - Mutating state directly
+state.users.find(u => u.id === userId).name = newName;
+setState(state);
+
+### Rule: Avoid Unnecessary Global State
+Use composition and props for simple data flow; reserve global state for truly shared data.
+
+// ✅ Good - Props for simple parent-child communication
+<Parent>
+  <Child onAction={handleAction} data={data} />
+</Parent>
+
+// ❌ Bad - Global state for simple parent-child data
+// Using Redux/Context for data that only 2 components need
+
+---
+
+## Bundle Optimization
+
+### Rule: Tree-Shake Unused Code
+Import only what you need to enable tree-shaking.
+
+// ✅ Good - Named imports enable tree-shaking
+import { debounce, throttle } from 'lodash-es';
+
+// ❌ Bad - Entire lodash library included
+import _ from 'lodash';
+const debounced = _.debounce(fn);
+
+### Rule: Analyze Bundles Regularly
+Use webpack-bundle-analyzer or similar tools to identify optimization opportunities.
+
+// package.json
+{
+  "scripts": {
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "build:analyze": "ANALYZE=true npm run build"
+  }
+}
+
+// webpack.config.js
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+plugins: [
+  process.env.ANALYZE && new BundleAnalyzerPlugin()
+].filter(Boolean)
+
+### Rule: Always Use Production Builds for Deployment
+Ensure production optimizations are enabled.
+
+// ✅ Good - Production build
+// package.json
+{
+  "scripts": {
+    "build": "NODE_ENV=production webpack --mode production"
+  }
+}
+
+// vite.config.js
+export default {
+  mode: 'production',
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true
+      }
+    }
+  }
+}
+
+### Rule: Enable Compression
+Configure gzip or brotli compression for assets.
+
+// Express server example
+const compression = require('compression');
+app.use(compression());
+
+// Nginx configuration
+gzip on;
+gzip_types text/plain text/css application/json application/javascript;
+gzip_min_length 1000;
+
+### Rule: Remove Unused Dependencies
+Regularly audit and remove unused packages.
+
+# Audit dependencies
+npx depcheck
+
+# Remove unused packages
+npm uninstall unused-package
+
+# Check for duplicates
+npm dedupe
+
+---
+
+## Image & Asset Optimization
+
+### Rule: Lazy Load Images with Intersection Observer
+Defer offscreen image loading until they're needed.
+
+// ✅ Good - Lazy loaded images
+import { useEffect, useRef, useState } from 'react';
+
+const LazyImage = ({ src, alt, placeholder }) => {
+  const [imageSrc, setImageSrc] = useState(placeholder);
+  const imgRef = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setImageSrc(src);
+          observer.unobserve(entry.target);
+        }
+      });
+    });
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [src]);
+
+  return <img ref={imgRef} src={imageSrc} alt={alt} />;
+};
+
+// Or use a library
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+
+<LazyLoadImage
+  src={image.src}
+  alt={image.alt}
+  effect="blur"
+  placeholderSrc={image.placeholder}
+/>
+
+### Rule: Use Appropriate Image Formats and Sizes
+Serve responsive images with modern formats.
+
+// ✅ Good - Responsive images with modern formats
+<picture>
+  <source srcSet="image.webp" type="image/webp" />
+  <source srcSet="image.jpg" type="image/jpeg" />
+  <img
+    src="image.jpg"
+    alt="Description"
+    loading="lazy"
+    srcSet="image-320w.jpg 320w, image-640w.jpg 640w, image-1280w.jpg 1280w"
+    sizes="(max-width: 640px) 100vw, 640px"
+  />
+</picture>
+
+// ❌ Bad - Single large image for all devices
+<img src="huge-image.jpg" alt="Description" />
+
+### Rule: Implement Progressive Image Loading
+Show low-quality placeholders while loading high-quality images.
+
+// ✅ Good - Progressive image loading
+const ProgressiveImage = ({ src, placeholder }) => {
+  const [imgSrc, setImgSrc] = useState(placeholder);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      setImgSrc(src);
+      setIsLoading(false);
+    };
+  }, [src]);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <img
+        src={imgSrc}
+        style={{
+          filter: isLoading ? 'blur(10px)' : 'none',
+          transition: 'filter 0.3s'
+        }}
+        alt="Progressive loading"
+      />
+    </div>
+  );
+};
+
+---
+
+## Event Handling
+
+### Rule: Debounce and Throttle Expensive Event Handlers
+Limit the rate of expensive operations triggered by events.
+
+// ✅ Good - Debounced search
+import { useMemo } from 'react';
+import debounce from 'lodash-es/debounce';
+
+const SearchComponent = () => {
+  const debouncedSearch = useMemo(
+    () => debounce((query) => {
+      performExpensiveSearch(query);
+    }, 300),
+    []
+  );
+
+  return (
+    <input
+      onChange={(e) => debouncedSearch(e.target.value)}
+      placeholder="Search..."
+    />
+  );
+};
+
+// ✅ Good - Throttled scroll handler
+import throttle from 'lodash-es/throttle';
+
+useEffect(() => {
+  const handleScroll = throttle(() => {
+    // Expensive scroll handling
+  }, 100);
+
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+### Rule: Avoid Inline Functions in Render
+Define event handlers outside of JSX or memoize them.
+
+// ✅ Good - Memoized handler
+const handleClick = useCallback(() => {
+  doSomething(id);
+}, [id]);
+
+return <button onClick={handleClick}>Click</button>;
+
+// ❌ Bad - Inline function creates new reference
+return <button onClick={() => doSomething(id)}>Click</button>;
+
+### Rule: Bind Functions Correctly
+Use arrow functions or explicit binding to maintain correct context.
+
+// ✅ Good - Arrow function in class field
+class MyComponent extends React.Component {
+  handleClick = () => {
+    this.setState({ clicked: true });
+  };
+
+  render() {
+    return <button onClick={this.handleClick}>Click</button>;
+  }
+}
+
+// ✅ Good - useCallback in functional component
+const MyComponent = () => {
+  const handleClick = useCallback(() => {
+    doSomething();
+  }, []);
+
+  return <button onClick={handleClick}>Click</button>;
+};
+
+// ❌ Bad - Loses context
+class MyComponent extends React.Component {
+  handleClick() {
+    this.setState({ clicked: true }); // 'this' is undefined
+  }
+
+  render() {
+    return <button onClick={this.handleClick}>Click</button>;
+  }
+}
+
+---
+
+## Profiling & Monitoring
+
+### Rule: Use React DevTools Profiler Regularly
+Profile your application to identify performance bottlenecks before optimizing.
+
+// Enable profiling in development
+// 1. Install React DevTools browser extension
+// 2. Open DevTools → Profiler tab
+// 3. Click Record → Interact with app → Stop
+// 4. Analyze flame graph and ranked components
+
+// Look for:
+// - Components with long render times
+// - Frequent re-renders
+// - Unnecessary renders
+
+### Rule: Implement React Profiler API for Production Monitoring
+Measure component performance in production.
+
+// ✅ Good - Profiler API usage
+import { Profiler } from 'react';
+
+const onRenderCallback = (
+  id, // the "id" prop of the Profiler tree
+  phase, // "mount" or "update"
+  actualDuration, // time spent rendering
+  baseDuration, // estimated time without memoization
+  startTime, // when React began rendering
+  commitTime, // when React committed the update
+  interactions // Set of interactions for this update
+) => {
+  // Log to analytics service
+  analytics.track('component_render', {
+    componentId: id,
+    phase,
+    actualDuration,
+    baseDuration
+  });
+};
+
+<Profiler id="Dashboard" onRender={onRenderCallback}>
+  <Dashboard />
+</Profiler>
+
+### Rule: Monitor Render Counts and Timing
+Track component re-renders during development.
+
+// ✅ Good - Custom hook to log renders
+const useRenderCount = (componentName) => {
+  const renderCount = useRef(0);
+  
+  useEffect(() => {
+    renderCount.current += 1;
+    console.log(`${componentName} rendered ${renderCount.current} times`);
+  });
+};
+
+const MyComponent = () => {
+  useRenderCount('MyComponent');
+  // ... component logic
+};
+
+### Rule: Profile Before Optimizing
+Always measure performance before and after optimization attempts.
+
+// ✅ Good - Measure performance impact
+// Before optimization
+console.time('ExpensiveOperation');
+const result = expensiveOperation(data);
+console.timeEnd('ExpensiveOperation');
+
+// After optimization with useMemo
+const result = useMemo(() => expensiveOperation(data), [data]);
+
+---
+
+## Advanced Techniques
+
+### Rule: Use Web Workers for Heavy Computations
+Offload CPU-intensive tasks to background threads.
+
+// ✅ Good - Web Worker for data processing
+// worker.js
+self.addEventListener('message', (e) => {
+  const result = heavyComputation(e.data);
+  self.postMessage(result);
+});
+
+// Component.jsx
+import { useEffect, useState } from 'react';
+
+const DataProcessor = ({ data }) => {
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    const worker = new Worker(new URL('./worker.js', import.meta.url));
+    
+    worker.postMessage(data);
+    worker.onmessage = (e) => setResult(e.data);
+    
+    return () => worker.terminate();
+  }, [data]);
+
+  return <div>{result}</div>;
+};
+
+### Rule: Implement Server-Side Rendering When Appropriate
+Use Next.js or similar frameworks for improved initial load and SEO.
+
+// ✅ Good - Next.js SSR for initial page load
+// pages/products/[id].js
+export async function getServerSideProps({ params }) {
+  const product = await fetchProduct(params.id);
+  return { props: { product } };
+}
+
+export default function ProductPage({ product }) {
+  return <ProductDetails product={product} />;
+}
+
+// ✅ Good - Static generation for content pages
+export async function getStaticProps() {
+  const posts = await fetchPosts();
+  return { props: { posts }, revalidate: 60 };
+}
+
+### Rule: Use useTransition for Non-Urgent Updates (React 18+)
+Mark state updates as transitions to keep UI responsive.
+
+// ✅ Good - useTransition for expensive updates
+import { useTransition, useState } from 'react';
+
+const SearchResults = () => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSearch = (value) => {
+    setQuery(value); // Urgent: update input immediately
+    
+    startTransition(() => {
+      // Non-urgent: update results without blocking
+      setResults(performExpensiveSearch(value));
+    });
+  };
+
+  return (
+    <>
+      <input value={query} onChange={(e) => handleSearch(e.target.value)} />
+      {isPending && <Spinner />}
+      <ResultsList results={results} />
+    </>
+  );
+};
+
+### Rule: Utilize React Fragments to Avoid Extra DOM Nodes
+Reduce DOM depth with fragments instead of wrapper divs.
+
+// ✅ Good - Using fragments
+const List = () => (
+  <>
+    <li>Item 1</li>
+    <li>Item 2</li>
+    <li>Item 3</li>
+  </>
+);
+
+// ❌ Bad - Unnecessary wrapper div
+const List = () => (
+  <div>
+    <li>Item 1</li>
+    <li>Item 2</li>
+    <li>Item 3</li>
+  </div>
+);
+
+---
+
+## Best Practices
+
+### Rule: Avoid Premature Optimization
+Don't optimize until you have identified actual performance problems.
+
+1. Build features with clean, readable code
+2. Profile to identify bottlenecks
+3. Optimize specific problem areas
+4. Measure improvement
+5. Repeat as needed
+
+### Rule: Profile First, Then Optimize
+Use data to drive optimization decisions.
+
+// ✅ Good - Optimization based on profiling data
+// Profiler shows ExpensiveList re-renders frequently
+const ExpensiveList = React.memo(({ items }) => {
+  return items.map(item => <ExpensiveItem key={item.id} item={item} />);
+});
+
+// ❌ Bad - Optimizing without measuring
+// Wrapping everything in React.memo "just in case"
+
+### Rule: Keep Components Small and Focused
+Break large components into smaller, reusable pieces.
+
+// ✅ Good - Small, focused components
+const UserProfile = ({ user }) => (
+  <div>
+    <UserAvatar user={user} />
+    <UserInfo user={user} />
+    <UserActions user={user} />
+  </div>
+);
+
+// ❌ Bad - Monolithic component
+const UserProfile = ({ user }) => (
+  <div>
+    {/* 500 lines of JSX */}
+  </div>
+);
+
+### Rule: Use TypeScript for Type Safety
+Catch errors at compile time and improve code maintainability.
+
+// ✅ Good - Type-safe props
+interface UserCardProps {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  onEdit: (userId: string) => void;
+}
+
+const UserCard: React.FC<UserCardProps> = ({ user, onEdit }) => {
+  return (
+    <div>
+      <h3>{user.name}</h3>
+      <button onClick={() => onEdit(user.id)}>Edit</button>
+    </div>
+  );
+};
+
+### Rule: Follow Immutability Patterns
+Never mutate state or props directly.
+
+// ✅ Good - Immutable updates
+const addItem = (newItem) => {
+  setItems(prevItems => [...prevItems, newItem]);
+};
+
+const updateItem = (id, updates) => {
+  setItems(prevItems =>
+    prevItems.map(item =>
+      item.id === id ? { ...item, ...updates } : item
+    )
+  );
+};
+
+// ❌ Bad - Mutating state
+const addItem = (newItem) => {
+  items.push(newItem);
+  setItems(items);
+};
+
+### Rule: Optimize Dependencies and Imports
+Be strategic about what you import and when.
+
+// ✅ Good - Optimized imports
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
+
+// ❌ Bad - Importing entire library
+import * as dateFns from 'date-fns';
+
+// ✅ Good - Dynamic imports for large libraries
+const Chart = React.lazy(() => import('recharts').then(module => ({
+  default: module.LineChart
+})));
+
+// ❌ Bad - Bundling large libraries upfront
+import { LineChart } from 'recharts';
+
+---
+
+## Performance Checklist
+
+Before deploying to production, verify:
+
+- [ ] All routes use code splitting with React.lazy
+- [ ] Large lists (100+ items) are virtualized
+- [ ] Images are lazy loaded and optimized
+- [ ] Event handlers are debounced/throttled where appropriate
+- [ ] Components are memoized strategically (not excessively)
+- [ ] Redux selectors are memoized with Reselect
+- [ ] Bundle size is analyzed and optimized
+- [ ] Production build is minified and compressed
+- [ ] Unused dependencies are removed
+- [ ] React DevTools Profiler shows no obvious bottlenecks
+- [ ] Key prop is used correctly in all lists
+- [ ] No inline functions in frequently rendered components
+- [ ] State is kept as local as possible
+- [ ] TypeScript types are properly defined
+- [ ] Web Vitals metrics (LCP, FID, CLS) are within targets
+
+---
+
+## Useful Tools & Resources
+
+### Profiling & Analysis
+- React DevTools Profiler
+- Chrome DevTools Performance tab
+- Lighthouse
+- webpack-bundle-analyzer
+- source-map-explorer
+
+### Libraries
+- react-window / react-virtualized (list virtualization)
+- Reselect (Redux selector memoization)
+- lodash-es (utility functions with tree-shaking)
+- date-fns (lightweight date library)
+
+### Monitoring
+- Web Vitals
+- Sentry Performance Monitoring
+- New Relic
+- Datadog RUM
+
+### Learning Resources
+- React documentation: https://react.dev/learn
+- Web.dev Performance: https://web.dev/performance
+- React Performance Optimization articles
+- React RFC repository for upcoming features
+
+---
+
+*Last Updated: 2025*
+*Keep these rules updated as React evolves and new best practices emerge.*
