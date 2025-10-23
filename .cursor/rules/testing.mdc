@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 ### What Each Coverage Metric Means
 
 **Statements**: Percentage of executable statements run

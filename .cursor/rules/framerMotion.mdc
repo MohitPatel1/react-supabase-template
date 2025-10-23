@@ -1,0 +1,983 @@
+---
+alwaysApply: false
+---
+# Framer Motion Animation System - Cursor Rules
+
+## Core Philosophy
+Create a living, breathing digital presence with animations that feel like sunlight dancing through morning dew. Every interaction should spark joy, curiosity, and a sense of "this was made just for me."
+
+## Color System & Theme
+```typescript
+// Sunflower & Morning Palette
+const colorSystem = {
+  primary: {
+    sunflower: '#FFD93D',
+    goldenYellow: '#FFC107',
+    warmAmber: '#FFB347',
+  },
+  morning: {
+    skyBlue: '#87CEEB',
+    peach: '#FFCBA4',
+    mintFresh: '#B4E7CE',
+    lavenderMist: '#E6E6FA',
+  },
+  playful: {
+    coral: '#FF6B6B',
+    turquoise: '#4ECDC4',
+    lilac: '#C77DFF',
+    lime: '#95E1D3',
+  },
+  // Multi-mode dark themes
+  darkModes: {
+    twilight: { bg: '#1a1a2e', accent: '#FFD93D' },
+    cosmic: { bg: '#0f0e17', accent: '#FF6B6B' },
+    forest: { bg: '#1b4332', accent: '#B4E7CE' },
+    desert: { bg: '#2c1810', accent: '#FFB347' },
+  }
+}
+```
+
+## Animation Principles
+
+### 1. **Entrance Animations** (Hero & Key Elements)
+```typescript
+// Hero animations should be SPECTACULAR and memorable
+const heroVariants = {
+  hidden: { 
+    opacity: 0,
+    scale: 0.8,
+    rotateX: -20,
+    y: 50,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    rotateX: 0,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+      mass: 0.8,
+      duration: 1.2,
+      delayChildren: 0.3,
+      staggerChildren: 0.15,
+    }
+  }
+}
+
+// Staggered text reveal with morphing effect
+const textMorphVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 20, 
+    filter: "blur(10px)",
+    scale: 0.95,
+  },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    scale: 1,
+    transition: {
+      delay: i * 0.08,
+      type: "spring",
+      stiffness: 200,
+      damping: 20,
+    }
+  })
+}
+```
+
+### 2. **Scroll-Triggered Animations**
+```typescript
+// Use parallax, reveal, and morphing effects
+const scrollVariants = {
+  // Parallax layers
+  parallaxSlow: {
+    y: useTransform(scrollY, [0, 1000], [0, -200]),
+  },
+  parallaxFast: {
+    y: useTransform(scrollY, [0, 1000], [0, -500]),
+  },
+  
+  // Reveal with magnetic pull
+  magneticReveal: {
+    initial: { opacity: 0, scale: 0.8, rotateY: -30 },
+    whileInView: { 
+      opacity: 1, 
+      scale: 1, 
+      rotateY: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+      }
+    },
+    viewport: { once: false, amount: 0.3 }
+  },
+  
+  // Floating sections
+  float: {
+    y: [0, -20, 0],
+    transition: {
+      repeat: Infinity,
+      duration: 3,
+      ease: "easeInOut",
+    }
+  }
+}
+```
+
+### 3. **Hover & Interactive States**
+```typescript
+// Playful, surprising hover effects
+const interactionVariants = {
+  // Bouncy button
+  bouncyButton: {
+    rest: { scale: 1 },
+    hover: { 
+      scale: 1.05,
+      rotate: [0, -5, 5, -5, 0],
+      transition: {
+        rotate: { duration: 0.5 },
+        scale: { type: "spring", stiffness: 400, damping: 10 }
+      }
+    },
+    tap: { 
+      scale: 0.95,
+      rotate: 0,
+    }
+  },
+  
+  // Magnetic card
+  magneticCard: {
+    rest: { scale: 1, rotateX: 0, rotateY: 0 },
+    hover: {
+      scale: 1.03,
+      // Add mouse position tracking for 3D tilt
+      rotateX: (mouseY - cardCenter) * 0.05,
+      rotateY: (mouseX - cardCenter) * 0.05,
+      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+      transition: { type: "spring", stiffness: 300, damping: 20 }
+    }
+  },
+  
+  // Morphing blob
+  morphBlob: {
+    rest: { 
+      borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
+      scale: 1,
+    },
+    hover: {
+      borderRadius: "30% 60% 70% 40% / 50% 60% 30% 60%",
+      scale: 1.1,
+      rotate: 5,
+      transition: { duration: 0.8, ease: "easeInOut" }
+    }
+  }
+}
+```
+
+### 4. **3D Elements & Depth**
+```typescript
+// Use transform-style: preserve-3d and perspective
+const threeDVariants = {
+  cardFlip: {
+    front: { rotateY: 0 },
+    back: { rotateY: 180 },
+    transition: { 
+      duration: 0.6,
+      type: "spring",
+      stiffness: 120,
+      damping: 15,
+    }
+  },
+  
+  layeredDepth: {
+    container: {
+      style: { 
+        perspective: 1000,
+        transformStyle: "preserve-3d",
+      }
+    },
+    layer1: { z: 0 },
+    layer2: { z: 50 },
+    layer3: { z: 100 },
+  }
+}
+
+// Parallax mouse movement for 3D depth
+const use3DParallax = (element, strength = 20) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  const handleMouseMove = (e) => {
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    x.set((e.clientX - centerX) / strength);
+    y.set((e.clientY - centerY) / strength);
+  };
+  
+  return { x, y, handleMouseMove };
+}
+```
+
+### 5. **Cursor Effects**
+```typescript
+// Custom cursor that follows and reacts
+const cursorVariants = {
+  default: {
+    scale: 1,
+    backgroundColor: "rgba(255, 217, 61, 0.3)",
+    mixBlendMode: "difference",
+  },
+  hover: {
+    scale: 1.5,
+    backgroundColor: "rgba(255, 107, 107, 0.5)",
+  },
+  click: {
+    scale: 0.8,
+  },
+  drag: {
+    scale: 1.2,
+    backgroundColor: "rgba(78, 205, 196, 0.5)",
+  }
+}
+
+// Trailing particles
+const particleTrail = {
+  count: 20,
+  variants: {
+    hidden: { opacity: 0, scale: 0 },
+    visible: (i) => ({
+      opacity: [0, 1, 0],
+      scale: [0, 1, 0],
+      x: Math.random() * 40 - 20,
+      y: Math.random() * 40 - 20,
+      transition: {
+        delay: i * 0.02,
+        duration: 0.8,
+      }
+    })
+  }
+}
+```
+
+### 6. **Page Transitions**
+```typescript
+// Creative page transitions
+const pageTransitions = {
+  // Morphing page reveal
+  morph: {
+    initial: { 
+      clipPath: "circle(0% at 50% 50%)",
+      opacity: 0,
+    },
+    animate: { 
+      clipPath: "circle(150% at 50% 50%)",
+      opacity: 1,
+      transition: { duration: 0.8, ease: "easeInOut" }
+    },
+    exit: { 
+      clipPath: "circle(0% at 50% 50%)",
+      opacity: 0,
+      transition: { duration: 0.6 }
+    }
+  },
+  
+  // Slide with elastic bounce
+  slide: {
+    initial: { x: "100%", opacity: 0 },
+    animate: { 
+      x: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+        mass: 1,
+      }
+    },
+    exit: { 
+      x: "-100%", 
+      opacity: 0,
+      transition: { duration: 0.5 }
+    }
+  },
+  
+  // Stack and fade
+  stack: {
+    initial: { scale: 0.8, opacity: 0, y: 100 },
+    animate: { 
+      scale: 1, 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 25,
+      }
+    },
+    exit: { 
+      scale: 1.1, 
+      opacity: 0,
+      transition: { duration: 0.4 }
+    }
+  }
+}
+```
+
+### 7. **Micro-interactions & Gamification**
+```typescript
+// Celebration animations for achievements
+const celebrationVariants = {
+  confetti: {
+    // Burst of colorful particles
+    variants: {
+      hidden: { opacity: 0, scale: 0, y: 0 },
+      visible: (i) => ({
+        opacity: [0, 1, 1, 0],
+        scale: [0, 1.5, 1, 0.5],
+        y: [0, -100, -200, -250],
+        x: Math.cos(i * 0.5) * 100,
+        rotate: [0, 360 * (Math.random() > 0.5 ? 1 : -1)],
+        transition: {
+          duration: 1.5,
+          delay: i * 0.03,
+          ease: "easeOut",
+        }
+      })
+    }
+  },
+  
+  // Progress bar animations
+  progressBar: {
+    initial: { scaleX: 0, originX: 0 },
+    animate: (progress) => ({
+      scaleX: progress / 100,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+      }
+    })
+  },
+  
+  // Notification pop-in
+  notification: {
+    initial: { 
+      x: 400, 
+      opacity: 0,
+      scale: 0.8,
+      rotate: 10,
+    },
+    animate: { 
+      x: 0, 
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 18,
+      }
+    },
+    exit: { 
+      x: 400, 
+      opacity: 0,
+      scale: 0.8,
+      transition: { duration: 0.3 }
+    }
+  }
+}
+```
+
+### 8. **Layout Animations (Asymmetric)**
+```typescript
+// Bento grid with staggered reveals
+const bentoVariants = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.2,
+        staggerChildren: 0.1,
+      }
+    }
+  },
+  item: {
+    hidden: { 
+      opacity: 0, 
+      scale: 0.8,
+      rotate: -5,
+      y: 50,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+      }
+    }
+  }
+}
+
+// Masonry layout with magnetic spacing
+const masonryVariants = {
+  item: {
+    layout: true,
+    transition: {
+      layout: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      }
+    }
+  }
+}
+```
+
+### 9. **Personalization Animations**
+```typescript
+// Welcome back animation (for returning visitors)
+const personalizedVariants = {
+  welcomeBack: {
+    initial: { scale: 0, rotate: -180, opacity: 0 },
+    animate: {
+      scale: [0, 1.2, 1],
+      rotate: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 15,
+        duration: 1,
+      }
+    }
+  },
+  
+  // Morph user's name into view
+  nameMorph: {
+    initial: { 
+      filter: "blur(20px)",
+      scale: 0.8,
+      y: -50,
+      opacity: 0,
+    },
+    animate: {
+      filter: "blur(0px)",
+      scale: 1,
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 1.2,
+        ease: "easeOut",
+      }
+    }
+  },
+  
+  // History timeline reveal
+  timelineReveal: {
+    container: {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.2,
+          delayChildren: 0.3,
+        }
+      }
+    },
+    item: {
+      hidden: { x: -50, opacity: 0 },
+      visible: {
+        x: 0,
+        opacity: 1,
+        transition: {
+          type: "spring",
+          stiffness: 120,
+        }
+      }
+    }
+  }
+}
+```
+
+### 10. **Navigation Animations**
+```typescript
+// Experimental nav transitions
+const navVariants = {
+  // Circular menu expansion
+  circularMenu: {
+    closed: {
+      scale: 0,
+      opacity: 0,
+      rotate: -180,
+    },
+    open: {
+      scale: 1,
+      opacity: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 20,
+        staggerChildren: 0.05,
+      }
+    }
+  },
+  
+  // Morphing menu items
+  menuItem: {
+    closed: { 
+      x: -20, 
+      opacity: 0,
+      rotate: -10,
+    },
+    open: (i) => ({
+      x: 0,
+      opacity: 1,
+      rotate: 0,
+      transition: {
+        delay: i * 0.1,
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+      }
+    })
+  },
+  
+  // Blob navigation
+  blobNav: {
+    rest: { 
+      borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%",
+      scale: 1,
+    },
+    active: {
+      borderRadius: "50% 50% 50% 50%",
+      scale: 1.1,
+      transition: { duration: 0.4 }
+    }
+  }
+}
+```
+
+## Animation Best Practices
+
+### Performance Optimization
+```typescript
+// ✅ DO: Use transform and opacity for smooth 60fps animations
+<motion.div
+  style={{ willChange: "transform" }}
+  animate={{ scale: 1.2, opacity: 0.8 }}
+/>
+
+// ❌ DON'T: Animate expensive properties
+// Avoid: width, height, top, left, margin, padding
+
+// ✅ DO: Use layout animations for size changes
+<motion.div layout />
+
+// ✅ DO: Use useReducedMotion for accessibility
+const shouldReduceMotion = useReducedMotion();
+const variants = shouldReduceMotion ? reducedMotionVariants : fullMotionVariants;
+```
+
+### Timing & Easing
+```typescript
+// Soothing, natural timing
+const timingPresets = {
+  // Quick, snappy interactions
+  snappy: {
+    type: "spring",
+    stiffness: 400,
+    damping: 30,
+  },
+  
+  // Smooth, flowing movements
+  smooth: {
+    type: "spring",
+    stiffness: 100,
+    damping: 20,
+    mass: 1,
+  },
+  
+  // Playful, bouncy
+  bouncy: {
+    type: "spring",
+    stiffness: 200,
+    damping: 10,
+    mass: 0.8,
+  },
+  
+  // Gentle, calm
+  gentle: {
+    duration: 0.8,
+    ease: [0.25, 0.1, 0.25, 1], // Custom cubic-bezier
+  }
+}
+```
+
+### Staggering & Orchestration
+```typescript
+// Create rhythm with staggering
+const orchestrationVariants = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+        // Stagger from center outward
+        staggerDirection: 1,
+      }
+    }
+  },
+  
+  // Reverse exit animation
+  exit: {
+    transition: {
+      staggerChildren: 0.05,
+      staggerDirection: -1,
+    }
+  }
+}
+```
+
+### Gesture Handling
+```typescript
+// Drag, pan, and swipe
+const gestureProps = {
+  drag: true,
+  dragConstraints: { left: 0, right: 0, top: 0, bottom: 0 },
+  dragElastic: 0.2,
+  dragTransition: { bounceStiffness: 600, bounceDamping: 20 },
+  whileDrag: { scale: 1.1, cursor: "grabbing" },
+  
+  // Pan gesture
+  onPan: (event, info) => {
+    // info.offset.x, info.offset.y
+    // info.velocity.x, info.velocity.y
+  },
+  
+  // Swipe detection
+  onPanEnd: (event, info) => {
+    if (Math.abs(info.velocity.x) > 500) {
+      // Swipe detected
+    }
+  }
+}
+```
+
+### Advanced Techniques
+```typescript
+// 1. Shared layout animations
+<AnimatePresence mode="wait">
+  <motion.div layoutId="shared-element" />
+</AnimatePresence>
+
+// 2. SVG path animations
+<motion.path
+  d="M..."
+  variants={{
+    hidden: { pathLength: 0, opacity: 0 },
+    visible: { 
+      pathLength: 1, 
+      opacity: 1,
+      transition: { 
+        pathLength: { duration: 2, ease: "easeInOut" },
+        opacity: { duration: 0.5 }
+      }
+    }
+  }}
+/>
+
+// 3. Morph between shapes
+<motion.div
+  animate={{
+    borderRadius: ["20% 80% 80% 20%", "80% 20% 20% 80%", "20% 80% 80% 20%"]
+  }}
+  transition={{
+    repeat: Infinity,
+    duration: 4,
+    ease: "easeInOut"
+  }}
+/>
+
+// 4. Follow cursor with spring physics
+const cursorX = useMotionValue(0);
+const cursorY = useMotionValue(0);
+const springX = useSpring(cursorX, { stiffness: 150, damping: 15 });
+const springY = useSpring(cursorY, { stiffness: 150, damping: 15 });
+
+useEffect(() => {
+  const handleMouseMove = (e) => {
+    cursorX.set(e.clientX);
+    cursorY.set(e.clientY);
+  };
+  window.addEventListener("mousemove", handleMouseMove);
+  return () => window.removeEventListener("mousemove", handleMouseMove);
+}, []);
+```
+
+## Component Library Patterns
+
+### Reusable Animation Wrappers
+```typescript
+// FadeInWhenVisible
+const FadeInWhenVisible = ({ children, delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.3 }}
+    transition={{ delay, duration: 0.6, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
+// MagneticButton
+const MagneticButton = ({ children, ...props }) => {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const handleMouseMove = (e) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    x.set((e.clientX - centerX) * 0.3);
+    y.set((e.clientY - centerY) * 0.3);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      style={{ x, y }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      {...props}
+    >
+      {children}
+    </motion.button>
+  );
+};
+
+// ParallaxSection
+const ParallaxSection = ({ children, speed = 0.5 }) => {
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -500 * speed]);
+  
+  return (
+    <motion.div style={{ y }}>
+      {children}
+    </motion.div>
+  );
+};
+```
+
+## Typography Animation System
+```typescript
+// For large headings - dramatic reveals
+const headingVariants = {
+  hidden: {
+    opacity: 0,
+    y: 100,
+    rotateX: -90,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    rotateX: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+      mass: 1.2,
+    }
+  }
+}
+
+// Gradient text animation
+const gradientText = {
+  backgroundImage: "linear-gradient(90deg, #FFD93D, #FF6B6B, #4ECDC4, #FFD93D)",
+  backgroundSize: "200% 100%",
+  backgroundClip: "text",
+  WebkitBackgroundClip: "text",
+  color: "transparent",
+  animation: "gradientShift 3s ease infinite",
+}
+
+// Letter-by-letter reveal
+const SplitText = ({ text, delay = 0 }) => {
+  const letters = text.split("");
+  return (
+    <span>
+      {letters.map((letter, i) => (
+        <motion.span
+          key={i}
+          custom={i}
+          variants={{
+            hidden: { opacity: 0, y: 20 },
+            visible: (i) => ({
+              opacity: 1,
+              y: 0,
+              transition: {
+                delay: delay + i * 0.03,
+                type: "spring",
+                stiffness: 200,
+              }
+            })
+          }}
+          initial="hidden"
+          animate="visible"
+        >
+          {letter === " " ? "\u00A0" : letter}
+        </motion.span>
+      ))}
+    </span>
+  );
+};
+```
+
+## Accessibility Considerations
+```typescript
+// Always respect user preferences
+import { useReducedMotion } from "framer-motion";
+
+const AccessibleAnimation = ({ children }) => {
+  const shouldReduceMotion = useReducedMotion();
+  
+  const variants = shouldReduceMotion 
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1 },
+      }
+    : {
+        hidden: { opacity: 0, y: 50, scale: 0.8 },
+        visible: { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1,
+          transition: {
+            type: "spring",
+            stiffness: 100,
+            damping: 15,
+          }
+        },
+      };
+  
+  return (
+    <motion.div variants={variants}>
+      {children}
+    </motion.div>
+  );
+};
+
+// Keyboard navigation support
+<motion.button
+  whileFocus={{ scale: 1.05, outline: "2px solid #FFD93D" }}
+/>
+```
+
+## Animation Inspiration Patterns
+
+### Bruno Simon Style
+- Physics-based interactions
+- Playful 3D elements
+- Unexpected surprises
+- Gamification elements
+
+### Pudding Cool Style
+- Data-driven animations
+- Scroll-based storytelling
+- Interactive visualizations
+- Smooth transitions between states
+
+### Implementation Pattern
+```typescript
+// Scroll-based story progression
+const { scrollYProgress } = useScroll();
+const storyProgress = useTransform(scrollYProgress, [0, 1], [0, 100]);
+
+const ChapterTransition = () => {
+  const opacity = useTransform(storyProgress, 
+    [20, 30, 70, 80], 
+    [0, 1, 1, 0]
+  );
+  
+  return (
+    <motion.div style={{ opacity }}>
+      {/* Chapter content */}
+    </motion.div>
+  );
+};
+```
+
+## Multi-Mode Theme Transitions
+```typescript
+// Smooth theme morphing
+const ThemeTransition = ({ theme }) => {
+  return (
+    <motion.div
+      animate={{
+        backgroundColor: theme.bg,
+        color: theme.text,
+      }}
+      transition={{
+        duration: 0.8,
+        ease: "easeInOut",
+      }}
+    >
+      {/* Content */}
+    </motion.div>
+  );
+};
+
+// Theme selector with playful animations
+const ThemeButton = ({ theme, isActive }) => (
+  <motion.button
+    whileHover={{ scale: 1.1, rotate: 5 }}
+    whileTap={{ scale: 0.9 }}
+    animate={{
+      scale: isActive ? 1.2 : 1,
+      boxShadow: isActive 
+        ? "0 0 20px rgba(255, 217, 61, 0.5)" 
+        : "0 0 0px rgba(0,0,0,0)",
+    }}
+  />
+);
+```
+
+## Final Guidelines
+
+1. **Always prioritize performance**: Use `transform` and `opacity`
+2. **Spring physics for organic feel**: Prefer spring animations over duration-based
+3. **Respect user preferences**: Check for reduced motion
+4. **Layer your animations**: Create depth with multiple animation layers
+5. **Add personality**: Every interaction should feel intentional and delightful
+6. **Test on various devices**: Ensure smooth performance across devices
+7. **Progressive enhancement**: Content should work without JS
+8. **Meaningful motion**: Animations should guide attention and provide feedback
+9. **Consistency with variety**: Maintain patterns but keep it fresh
+10. **Personal touches**: Use user data to create unique experiences
+
+## Remember
+The goal is to create a website that doesn't feel like a website—it feels like an experience crafted just for the visitor. Every scroll, click, and hover should reveal something new and delightful, making them want to explore every corner of your digital presence. Like morning sunshine through a window, your animations should feel warm, natural, and full of life.
