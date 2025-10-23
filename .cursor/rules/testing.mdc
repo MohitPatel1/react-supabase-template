@@ -1,0 +1,2607 @@
+---
+alwaysApply: true
+---
+
+### What Each Coverage Metric Means
+
+**Statements**: Percentage of executable statements run
+**Branches**: Percentage of if/else branches tested
+**Functions**: Percentage of functions called
+**Lines**: Percentage of code lines executed
+
+### Coverage Reports
+
+Run coverage and view reports:
+```bash
+# Generate coverage
+npm run test:coverage
+
+# View HTML report
+open coverage/index.html
+```
+
+---
+
+## 📝 Test-Driven Development (TDD) Workflow
+
+### Red-Green-Refactor Cycle
+
+When building new features, follow TDD:
+
+**1. Red (Write Failing Test)**:
+```typescript
+// hooks/useLocalStorage.test.ts
+describe('useLocalStorage', () => {
+  it('stores and retrieves values from localStorage', () => {
+    const { result } = renderHook(() => useLocalStorage('key', 'default'));
+    
+    expect(result.current[0]).toBe('default');
+    
+    act(() => {
+      result.current[1]('new value');
+    });
+    
+    expect(result.current[0]).toBe('new value');
+    expect(localStorage.getItem('key')).toBe('"new value"');
+  });
+});
+```
+
+**2. Green (Make Test Pass)**:
+```typescript
+// hooks/useLocalStorage.ts
+export function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T) => {
+    try {
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue] as const;
+}
+```
+
+**3. Refactor (Improve Code)**:
+- Add error handling
+- Extract duplicated logic
+- Improve naming
+- Add edge case tests
+
+---
+
+## 🎨 Testing Mini-Apps
+
+### Mini-App Test Structure
+
+Each mini-app should have comprehensive tests:
+
+```typescript
+// features/mini-apps/TicTacToe/TicTacToe.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { TicTacToe } from './TicTacToe';
+
+describe('TicTacToe Mini-App', () => {
+  // Game initialization
+  it('renders 3x3 game board', () => {
+    render(<TicTacToe />);
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    expect(cells).toHaveLength(9);
+  });
+
+  it('starts with X as first player', () => {
+    render(<TicTacToe />);
+    expect(screen.getByText(/player x's turn/i)).toBeInTheDocument();
+  });
+
+  // Game mechanics
+  it('places X on first move', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const firstCell = screen.getAllByRole('button', { name: /cell/i })[0];
+    await user.click(firstCell);
+    
+    expect(firstCell).toHaveTextContent('X');
+  });
+
+  it('alternates between X and O', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    await user.click(cells[0]);
+    expect(cells[0]).toHaveTextContent('X');
+    
+    await user.click(cells[1]);
+    expect(cells[1]).toHaveTextContent('O');
+  });
+
+  it('prevents playing in occupied cell', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cell = screen.getAllByRole('button', { name: /cell/i })[0];
+    
+    await user.click(cell);
+    expect(cell).toHaveTextContent('X');
+    
+    await user.click(cell); // Try again
+    expect(cell).toHaveTextContent('X'); // Still X, not O
+  });
+
+  // Win conditions
+  it('detects horizontal win', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    // X wins top row
+    await user.click(cells[0]); // X
+    await user.click(cells[3]); // O
+    await user.click(cells[1]); // X
+    await user.click(cells[4]); // O
+    await user.click(cells[2]); // X wins
+    
+    expect(screen.getByText(/x wins/i)).toBeInTheDocument();
+  });
+
+  it('detects vertical win', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    // O wins first column
+    await user.click(cells[1]); // X
+    await user.click(cells[0]); // O
+    await user.click(cells[2]); // X
+    await user.click(cells[3]); // O
+    await user.click(cells[4]); // X
+    await user.click(cells[6]); // O wins
+    
+    expect(screen.getByText(/o wins/i)).toBeInTheDocument();
+  });
+
+  it('detects diagonal win', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    // X wins diagonal
+    await user.click(cells[0]); // X
+    await user.click(cells[1]); // O
+    await user.click(cells[4]); // X
+    await user.click(cells[2]); // O
+    await user.click(cells[8]); // X wins
+    
+    expect(screen.getByText(/x wins/i)).toBeInTheDocument();
+  });
+
+  it('detects draw when board is full', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    // Fill board with no winner
+    const moves = [0, 1, 2, 4, 3, 5, 7, 6, 8];
+    for (const index of moves) {
+      await user.click(cells[index]);
+    }
+    
+    expect(screen.getByText(/draw/i)).toBeInTheDocument();
+  });
+
+  // Game controls
+  it('resets game when reset button clicked', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    await user.click(cells[0]);
+    
+    const resetButton = screen.getByRole('button', { name: /reset/i });
+    await user.click(resetButton);
+    
+    cells.forEach(cell => {
+      expect(cell).toHaveTextContent('');
+    });
+  });
+
+  // Score tracking
+  it('tracks score across multiple games', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    
+    // X wins first game
+    await user.click(cells[0]); // X
+    await user.click(cells[3]); // O
+    await user.click(cells[1]); // X
+    await user.click(cells[4]); // O
+    await user.click(cells[2]); // X wins
+    
+    expect(screen.getByText(/x: 1/i)).toBeInTheDocument();
+    
+    // Start new game
+    await user.click(screen.getByRole('button', { name: /play again/i }));
+    
+    // O wins second game
+    await user.click(cells[1]); // X
+    await user.click(cells[0]); // O
+    await user.click(cells[2]); // X
+    await user.click(cells[3]); // O
+    await user.click(cells[4]); // X
+    await user.click(cells[6]); // O wins
+    
+    expect(screen.getByText(/x: 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/o: 1/i)).toBeInTheDocument();
+  });
+
+  // Persistence (if logged in)
+  it('saves game state for logged-in users', async () => {
+    const user = userEvent.setup();
+    const mockUser = { id: '123', name: 'Test User' };
+    
+    render(<TicTacToe user={mockUser} />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    await user.click(cells[0]);
+    
+    // Verify save was called
+    // This would use MSW to mock the API call
+    expect(screen.getByText(/game saved/i)).toBeInTheDocument();
+  });
+
+  // Accessibility
+  it('announces game state to screen readers', async () => {
+    const user = userEvent.setup();
+    render(<TicTacToe />);
+    
+    const cells = screen.getAllByRole('button', { name: /cell/i });
+    await user.click(cells[0]);
+    
+    const announcement = screen.getByRole('status');
+    expect(announcement).toHaveTextContent(/x played in cell 1/i);
+  });
+
+  // Performance
+  it('renders efficiently with many games played', () => {
+    const { rerender } = render(<TicTacToe />);
+    
+    // Simulate many rerenders
+    for (let i = 0; i < 100; i++) {
+      rerender(<TicTacToe />);
+    }
+    
+    // Should still be responsive
+    expect(screen.getByRole('heading')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## 🔥 Performance Testing
+
+### Performance Benchmarks
+
+```typescript
+// utils/calculations.perf.test.ts
+import { describe, it, expect, bench } from 'vitest';
+import { complexCalculation } from './calculations';
+
+describe('Performance Tests', () => {
+  bench('complexCalculation with small dataset', () => {
+    const data = Array.from({ length: 100 }, (_, i) => i);
+    complexCalculation(data);
+  });
+
+  bench('complexCalculation with large dataset', () => {
+    const data = Array.from({ length: 10000 }, (_, i) => i);
+    complexCalculation(data);
+  }, { iterations: 10 });
+
+  it('completes within acceptable time', () => {
+    const start = performance.now();
+    const data = Array.from({ length: 1000 }, (_, i) => i);
+    complexCalculation(data);
+    const end = performance.now();
+    
+    expect(end - start).toBeLessThan(100); // Should take < 100ms
+  });
+});
+```
+
+### React Component Performance
+
+```typescript
+// components/LargeList.perf.test.tsx
+import { render } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { LargeList } from './LargeList';
+
+describe('LargeList Performance', () => {
+  it('renders 1000 items efficiently', () => {
+    const items = Array.from({ length: 1000 }, (_, i) => ({
+      id: i,
+      name: `Item ${i}`,
+    }));
+
+    const start = performance.now();
+    render(<LargeList items={items} />);
+    const end = performance.now();
+
+    // Should render in less than 200ms
+    expect(end - start).toBeLessThan(200);
+  });
+
+  it('updates without unnecessary rerenders', () => {
+    let renderCount = 0;
+    
+    const TestComponent = () => {
+      renderCount++;
+      return <LargeList items={[{ id: 1, name: 'Item' }]} />;
+    };
+
+    const { rerender } = render(<TestComponent />);
+    
+    const initialRenderCount = renderCount;
+    
+    // Rerender with same props
+    rerender(<TestComponent />);
+    
+    // Should not rerender if props haven't changed
+    expect(renderCount).toBe(initialRenderCount);
+  });
+});
+```
+
+---
+
+## 🎭 Testing Supabase Integration
+
+### Mocking Supabase Client
+
+```typescript
+// services/supabase/__mocks__/client.ts
+import { vi } from 'vitest';
+
+export const supabase = {
+  auth: {
+    signUp: vi.fn(),
+    signInWithPassword: vi.fn(),
+    signOut: vi.fn(),
+    getSession: vi.fn(),
+    onAuthStateChange: vi.fn(),
+  },
+  from: vi.fn(() => ({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn(),
+  })),
+  storage: {
+    from: vi.fn(() => ({
+      upload: vi.fn(),
+      download: vi.fn(),
+      remove: vi.fn(),
+    })),
+  },
+};
+```
+
+### Testing Auth Service
+
+```typescript
+// services/supabase/auth.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { supabase } from './client';
+import { signUp, signIn, signOut, getCurrentUser } from './auth';
+
+vi.mock('./client');
+
+describe('Auth Service', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('signUp', () => {
+    it('creates new user account', async () => {
+      const mockUser = {
+        id: '123',
+        email: 'test@example.com',
+        user_metadata: { name: 'Test User' },
+      };
+
+      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+        data: { user: mockUser, session: null },
+        error: null,
+      });
+
+      const result = await signUp({
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User',
+      });
+
+      expect(result.user).toEqual(mockUser);
+      expect(supabase.auth.signUp).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+        options: {
+          data: { name: 'Test User' },
+        },
+      });
+    });
+
+    it('handles signup errors', async () => {
+      vi.mocked(supabase.auth.signUp).mockResolvedValue({
+        data: { user: null, session: null },
+        error: { message: 'Email already exists' },
+      });
+
+      await expect(
+        signUp({
+          email: 'existing@example.com',
+          password: 'password123',
+        })
+      ).rejects.toThrow('Email already exists');
+    });
+  });
+
+  describe('signIn', () => {
+    it('signs in user with valid credentials', async () => {
+      const mockSession = {
+        access_token: 'token',
+        user: { id: '123', email: 'test@example.com' },
+      };
+
+      vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+        data: { session: mockSession, user: mockSession.user },
+        error: null,
+      });
+
+      const result = await signIn('test@example.com', 'password123');
+
+      expect(result.session).toEqual(mockSession);
+    });
+
+    it('throws error for invalid credentials', async () => {
+      vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
+        data: { session: null, user: null },
+        error: { message: 'Invalid credentials' },
+      });
+
+      await expect(
+        signIn('wrong@example.com', 'wrongpass')
+      ).rejects.toThrow('Invalid credentials');
+    });
+  });
+
+  describe('signOut', () => {
+    it('signs out user successfully', async () => {
+      vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null });
+
+      await expect(signOut()).resolves.not.toThrow();
+      expect(supabase.auth.signOut).toHaveBeenCalled();
+    });
+  });
+
+  describe('getCurrentUser', () => {
+    it('returns current user from session', async () => {
+      const mockUser = { id: '123', email: 'test@example.com' };
+
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({
+        data: {
+          session: {
+            access_token: 'token',
+            user: mockUser,
+          },
+        },
+        error: null,
+      });
+
+      const user = await getCurrentUser();
+
+      expect(user).toEqual(mockUser);
+    });
+
+    it('returns null when no session', async () => {
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      const user = await getCurrentUser();
+
+      expect(user).toBeNull();
+    });
+  });
+});
+```
+
+### Testing Database Operations
+
+```typescript
+// services/supabase/database.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { supabase } from './client';
+import { getUserProfile, updateUserProfile, createPost } from './database';
+
+vi.mock('./client');
+
+describe('Database Service', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('getUserProfile', () => {
+    it('fetches user profile by id', async () => {
+      const mockProfile = {
+        id: '123',
+        name: 'Test User',
+        bio: 'Test bio',
+        preferences: { theme: 'sunflower' },
+      };
+
+      const mockFrom = vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockProfile,
+          error: null,
+        }),
+      }));
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom);
+
+      const profile = await getUserProfile('123');
+
+      expect(profile).toEqual(mockProfile);
+      expect(mockFrom).toHaveBeenCalledWith('profiles');
+    });
+
+    it('handles profile not found', async () => {
+      const mockFrom = vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Profile not found' },
+        }),
+      }));
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom);
+
+      await expect(getUserProfile('999')).rejects.toThrow('Profile not found');
+    });
+  });
+
+  describe('updateUserProfile', () => {
+    it('updates user profile data', async () => {
+      const updates = { name: 'Updated Name', bio: 'New bio' };
+      const updatedProfile = { id: '123', ...updates };
+
+      const mockFrom = vi.fn(() => ({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: updatedProfile,
+          error: null,
+        }),
+      }));
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom);
+
+      const result = await updateUserProfile('123', updates);
+
+      expect(result).toEqual(updatedProfile);
+    });
+  });
+
+  describe('createPost', () => {
+    it('creates new blog post', async () => {
+      const newPost = {
+        title: 'Test Post',
+        content: 'Post content',
+        author_id: '123',
+      };
+
+      const createdPost = { id: 'post-1', ...newPost };
+
+      const mockFrom = vi.fn(() => ({
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: createdPost,
+          error: null,
+        }),
+      }));
+
+      vi.mocked(supabase.from).mockImplementation(mockFrom);
+
+      const result = await createPost(newPost);
+
+      expect(result).toEqual(createdPost);
+    });
+
+    it('validates required fields', async () => {
+      await expect(
+        createPost({ title: '', content: '', author_id: '123' })
+      ).rejects.toThrow('Title and content are required');
+    });
+  });
+});
+```
+
+---
+
+## 🎨 Visual Regression Testing
+
+### Setup Playwright Visual Comparisons
+
+```typescript
+// tests/e2e/visual.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Visual Regression Tests', () => {
+  test('homepage matches baseline', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    
+    // Take screenshot and compare to baseline
+    await expect(page).toHaveScreenshot('homepage.png');
+  });
+
+  test('dark theme matches baseline', async ({ page }) => {
+    await page.goto('/');
+    
+    // Switch to dark theme
+    await page.getByRole('button', { name: /theme/i }).click();
+    await page.getByRole('menuitem', { name: /midnight/i }).click();
+    
+    await page.waitForTimeout(500); // Wait for theme transition
+    
+    await expect(page).toHaveScreenshot('homepage-dark.png');
+  });
+
+  test('mini-app card hover state', async ({ page }) => {
+    await page.goto('/mini-apps');
+    
+    const card = page.getByRole('button', { name: /tic-tac-toe/i });
+    await card.hover();
+    
+    await expect(card).toHaveScreenshot('mini-app-card-hover.png');
+  });
+
+  test('mobile responsive layout', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    
+    await expect(page).toHaveScreenshot('homepage-mobile.png');
+  });
+});
+```
+
+---
+
+## 🚨 Error Boundary Testing
+
+```typescript
+// components/ErrorBoundary.test.tsx
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { ErrorBoundary } from './ErrorBoundary';
+
+// Component that throws error
+const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
+  if (shouldThrow) {
+    throw new Error('Test error');
+  }
+  return <div>No error</div>;
+};
+
+describe('ErrorBoundary', () => {
+  // Suppress console.error for these tests
+  const originalError = console.error;
+  beforeAll(() => {
+    console.error = vi.fn();
+  });
+  afterAll(() => {
+    console.error = originalError;
+  });
+
+  it('renders children when no error', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={false} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText(/no error/i)).toBeInTheDocument();
+  });
+
+  it('renders error UI when child throws', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+  });
+
+  it('shows retry button on error', () => {
+    render(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it('resets error state when retry clicked', async () => {
+    const { rerender } = render(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    const retryButton = screen.getByRole('button', { name: /try again/i });
+    await userEvent.click(retryButton);
+
+    // Rerender with no error
+    rerender(
+      <ErrorBoundary>
+        <ThrowError shouldThrow={false} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText(/no error/i)).toBeInTheDocument();
+  });
+
+  it('logs error to monitoring service', () => {
+    const logError = vi.fn();
+
+    render(
+      <ErrorBoundary onError={logError}>
+        <ThrowError shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(logError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.any(Object)
+    );
+  });
+});
+```
+
+---
+
+## 📱 Responsive Testing
+
+### Testing Different Viewports
+
+```typescript
+// components/Navigation.test.tsx
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { Navigation } from './Navigation';
+
+describe('Navigation Responsive Behavior', () => {
+  beforeEach(() => {
+    // Reset viewport
+    window.innerWidth = 1024;
+    window.innerHeight = 768;
+  });
+
+  it('shows desktop menu on large screens', () => {
+    window.innerWidth = 1200;
+    render(<Navigation />);
+
+    expect(screen.getByRole('navigation')).toHaveClass('desktop-nav');
+    expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
+  });
+
+  it('shows hamburger menu on mobile', () => {
+    window.innerWidth = 375;
+    render(<Navigation />);
+
+    expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument();
+  });
+
+  it('adjusts layout on tablet', () => {
+    window.innerWidth = 768;
+    render(<Navigation />);
+
+    const nav = screen.getByRole('navigation');
+    expect(nav).toHaveClass('tablet-nav');
+  });
+});
+```
+
+---
+
+## ⚡ Testing Strategy Checklist
+
+### Before Writing Any Code
+
+- [ ] Understand what you're building
+- [ ] Identify edge cases
+- [ ] Plan test scenarios
+- [ ] Write tests first (TDD when possible)
+
+### For Every Component
+
+- [ ] **Rendering**: Does it render correctly?
+- [ ] **Props**: Does it handle all prop variations?
+- [ ] **User Interactions**: Do clicks/types work?
+- [ ] **State Changes**: Does state update correctly?
+- [ ] **Error States**: Does it handle errors?
+- [ ] **Loading States**: Does it show loading UI?
+- [ ] **Accessibility**: Is it keyboard accessible?
+- [ ] **Edge Cases**: Null, undefined, empty, extreme values
+
+### For Every Custom Hook
+
+- [ ] **Return Values**: Returns correct data/functions
+- [ ] **Side Effects**: Properly manages effects
+- [ ] **Cleanup**: Cleans up on unmount
+- [ ] **Error Handling**: Handles async errors
+- [ ] **Dependencies**: Updates when deps change
+
+### For Every Utility Function
+
+- [ ] **Happy Path**: Works with valid inputs
+- [ ] **Edge Cases**: Handles boundary values
+- [ ] **Invalid Inputs**: Handles null/undefined
+- [ ] **Type Safety**: TypeScript types are correct
+- [ ] **Performance**: Runs efficiently
+
+### For Every API Integration
+
+- [ ] **Success Response**: Handles successful calls
+- [ ] **Error Response**: Handles failures gracefully
+- [ ] **Loading State**: Shows loading indicator
+- [ ] **Retry Logic**: Retries failed requests
+- [ ] **Mock Data**: Uses MSW for testing
+
+### Before Every Commit
+
+- [ ] All tests pass (`npm run test`)
+- [ ] Coverage meets thresholds (`npm run test:coverage`)
+- [ ] No console errors or warnings
+- [ ] Biome checks pass (`npm run lint`)
+- [ ] TypeScript compiles (`npm run type-check`)
+
+### Before Every PR
+
+- [ ] All unit tests pass
+- [ ] All integration tests pass
+- [ ] E2E tests for new features pass
+- [ ] Coverage report reviewed
+- [ ] No regression in existing tests
+- [ ] Performance benchmarks acceptable
+
+### Before Production Deploy
+
+- [ ] Full E2E test suite passes
+- [ ] Visual regression tests pass
+- [ ] Performance tests pass
+- [ ] Accessibility tests pass
+- [ ] Cross-browser testing complete
+- [ ] Mobile testing complete
+- [ ] Load testing (if applicable)
+
+---
+
+## 🎯 AI-Generated Test Guidelines
+
+### When AI Generates Tests
+
+**ALWAYS Review For**:
+1. **Test Coverage**: Are all paths covered?
+2. **Edge Cases**: Are edge cases included?
+3. **Assertions**: Are assertions meaningful?
+4. **Mocking**: Is mocking done correctly?
+5. **Cleanup**: Are cleanup functions present?
+6. **Async Handling**: Are promises/async properly awaited?
+7. **Error Scenarios**: Are error cases tested?
+8. **Accessibility**: Are a11y assertions included?
+
+### Prompt Template for AI Test Generation
+
+When asking AI to generate tests, use this format:
+
+```
+Generate comprehensive tests for [ComponentName/FunctionName]:
+
+Context:
+- Purpose: [What it does]
+- Location: [File path]
+- Dependencies: [External deps]
+
+Requirements:
+1. Test all user interactions
+2. Test all props/parameters
+3. Include edge cases: [list specific ones]
+4. Test error handling
+5. Test loading states
+6. Ensure accessibility
+7. Mock API calls with MSW
+8. Target 90%+ coverage
+
+Test file should be named: [filename].test.tsx
+Use Vitest + React Testing Library + userEvent
+```
+
+### Example AI Conversation
+
+**You**: 
+```
+Generate tests for UserProfileCard component:
+
+Context:
+- Shows user avatar, name, bio, and follow button
+- Located at: src/components/features/UserProfileCard.tsx
+- Uses Supabase for follow/unfollow actions
+
+Requirements:
+- Test rendering with/without user data
+- Test follow/unfollow interactions
+- Mock Supabase API calls
+- Test loading and error states
+- Test accessibility
+- Edge cases: long names, no avatar, verified users
+```
+
+**AI Should Generate**: Complete test file with all scenarios
+
+---
+
+## 🔧 Test Utilities & Helpers
+
+### Custom Render Function
+
+```typescript
+// tests/utils/test-utils.tsx
+import { render, RenderOptions } from '@testing-library/react';
+import { ReactElement } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { theme } from '@/theme';
+
+interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+  initialRoute?: string;
+  user?: User | null;
+}
+
+export function renderWithProviders(
+  ui: ReactElement,
+  {
+    initialRoute = '/',
+    user = null,
+    ...renderOptions
+  }: CustomRenderOptions = {}
+) {
+  window.history.pushState({}, 'Test page', initialRoute);
+
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <BrowserRouter>
+        <ThemeProvider theme={theme}>
+          <AuthProvider initialUser={user}>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    );
+  }
+
+  return render(ui, { wrapper: Wrapper, ...renderOptions });
+}
+
+// Re-export everything
+export * from '@testing-library/react';
+export { renderWithProviders as render };
+```
+
+### Usage of Custom Render
+
+```typescript
+// component.test.tsx
+import { render, screen } from '@/tests/utils/test-utils';
+import { UserDashboard } from './UserDashboard';
+
+it('renders dashboard for authenticated user', () => {
+  const user = { id: '123', name: 'Test User' };
+  
+  render(<UserDashboard />, { 
+    user,
+    initialRoute: '/dashboard' 
+  });
+
+  expect(screen.getByText(/welcome, test user/i)).toBeInTheDocument();
+});
+```
+
+### Test Fixtures
+
+```typescript
+// tests/fixtures/users.ts
+import type { User, UserProfile } from '@/types';
+
+export const mockUsers = {
+  authenticated: {
+    id: '123',
+    email: 'test@example.com',
+    name: 'Test User',
+    created_at: '2024-01-01',
+  } as User,
+
+  admin: {
+    id: '456',
+    email: 'admin@example.com',
+    name: 'Admin User',
+    role: 'admin',
+    created_at: '2024-01-01',
+  } as User,
+
+  newUser: {
+    id: '789',
+    email: 'new@example.com',
+    name: 'New User',
+    created_at: new Date().toISOString(),
+  } as User,
+};
+
+export const mockProfiles = {
+  complete: {
+    id: '123',
+    user_id: '123',
+    bio: 'Test bio',
+    avatar_url: 'https://example.com/avatar.jpg',
+    preferences: {
+      theme: 'sunflower',
+      notifications: true,
+    },
+  } as UserProfile,
+
+  incomplete: {
+    id: '789',
+    user_id: '789',
+    bio: null,
+    avatar_url: null,
+    preferences: {},
+  } as UserProfile,
+};
+```
+
+### Common Test Patterns
+
+```typescript
+// tests/utils/patterns.ts
+import { waitFor } from '@testing-library/react';
+
+/**
+ * Wait for element to be removed from DOM
+ */
+export async function waitForElementToBeRemoved(
+  callback: () => HTMLElement | null
+) {
+  await waitFor(() => {
+    expect(callback()).not.toBeInTheDocument();
+  });
+}
+
+/**
+ * Wait for loading to complete
+ */
+export async function waitForLoadingToFinish() {
+  await waitFor(() => {
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+}
+
+/**
+ * Fill form fields
+ */
+export async function fillForm(
+  user: ReturnType<typeof userEvent.setup>,
+  fields: Record<string, string>
+) {
+  for (const [label, value] of Object.entries(fields)) {
+    const field = screen.getByLabelText(new RegExp(label, 'i'));
+    await user.clear(field);
+    await user.type(field, value);
+  }
+}
+
+/**
+ * Submit form
+ */
+export async function submitForm(
+  user: ReturnType<typeof userEvent.setup>,
+  buttonText = /submit|send|save/i
+) {
+  const button = screen.getByRole('button', { name: buttonText });
+  await user.click(button);
+}
+```
+
+---
+
+## 🎯 Continuous Integration Testing
+
+### GitHub Actions Workflow
+
+```yaml
+# .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run unit tests
+        run: npm run test:coverage
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+      
+      - name: Check coverage thresholds
+        run: npm run test:coverage -- --coverage.thresholds.global.statements=80
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run integration tests
+        run: npm run test:integration
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Run E2E tests
+        run: npm run test:e2e
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+      
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
+  quality-gates:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run type-check
+      
+      - name: Lint
+        run: npm run lint
+      
+      - name: Check bundle size
+        run: npm run build && npm run analyze-bundle
+```
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:visual": "playwright test --grep @visual",
+    "test:watch": "vitest watch",
+    "test:ci": "npm run test:coverage && npm run test:e2e",
+    "type-check": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --apply .",
+    "analyze-bundle": "vite-bundle-visualizer"
+  }
+}
+```
+
+---
+
+## 📚 Testing Documentation
+
+### Document Test Patterns
+
+Create a `docs/testing-patterns.md`:
+
+```markdown
+# Testing Patterns
+
+## Component Testing Pattern
+
+Every component should follow this pattern:
+
+1. Rendering tests
+2. Interaction tests
+3. State management tests
+4. Error handling tests
+5. Loading state tests
+6. Accessibility tests
+
+## Example Template
+
+\`\`\`typescript
+describe('ComponentName', () => {
+  // 1. Rendering
+  describe('Rendering', () => {
+    it('renders with default props', () => {});
+    it('renders with all props provided', () => {});
+    it('renders conditionally based on props', () => {});
+  });
+
+  // 2. Interactions
+  describe('User Interactions', () => {
+    it('handles click events', () => {});
+    it('handles keyboard events', () => {});
+    it('handles form submissions', () => {});
+  });
+
+  // 3. State
+  describe('State Management', () => {
+    it('updates state correctly', () => {});
+    it('persists state', () => {});
+  });
+
+  // 4. Error Handling
+  describe('Error Handling', () => {
+    it('shows error messages', () => {});
+    it('recovers from errors', () => {});
+  });
+
+  // 5. Loading
+  describe('Loading States', () => {
+    it('shows loading indicator', () => {});
+    it('disables actions while loading', () => {});
+  });
+
+  // 6. Accessibility
+  describe('Accessibility', () => {
+    it('is keyboard navigable', () => {});
+    it('has proper ARIA labels', () => {});
+  });
+});
+\`\`\`
+```
+
+---
+
+## 🎓 Learning Resources & Best Practices
+
+### Testing Principles to Follow
+
+1. **Test Behavior, Not Implementation**
+   - Focus on what users see and do
+   - Don't test internal state or methods
+   - Tests should survive refactoring
+
+2. **Write Readable Tests**
+   - Clear test names that explain intent
+   - Well-organized with AAA pattern
+   - Minimal setup, focused assertions
+
+3. **Keep Tests Independent**
+   - Each test should run in isolation
+   - No shared state between tests
+   - Use beforeEach for setup
+
+4. **Test One Thing at a Time**
+   - One logical assertion per test
+   - Split complex tests into smaller ones
+   - Focus on single responsibility
+
+5. **Maintain Test Code Quality**
+   - Tests are first-class code
+   - Apply same standards as production code
+   - Refactor tests when needed
+
+6. **Mock External Dependencies**
+   - Mock API calls, timers, random values
+   - Control test environment completely
+   - Make tests deterministic
+
+7. **Test Edge Cases**
+   - Null, undefined, empty values
+   - Boundary conditions
+   - Error scenarios
+
+8. **Keep Tests Fast**
+   - Unit tests should be milliseconds
+   - Integration tests under 1 second
+   - E2E tests under 5 seconds each
+
+---
+
+## 🚀 Quick Start Testing Workflow
+
+### Day 1: Setup
+```bash
+# Install dependencies
+npm install -D vitest @vitest/ui @testing-library/react @testing-library/jest-dom @testing-library/user-event msw @playwright/test
+
+# Setup test files
+mkdir -p tests/{e2e,fixtures,utils,mocks}
+```
+
+### Day 2: Write Your First Test
+```typescript
+// src/components/Button.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders and handles click', async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+    
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    await user.click(screen.getByRole('button'));
+    
+    expect(handleClick).toHaveBeenCalledOnce();
+  });
+});
+```
+
+### Every Feature Development
+1. **Write test first** (or alongside code)
+2. **Run test** (`npm run test:watch`)
+3. **Make test pass**
+4. **Check coverage** (`npm run test:coverage`)
+5. **Refactor** while keeping tests green
+6. **Commit** with tests included
+
+### Before Every Push
+```bash
+# Run all tests
+npm run test
+
+# Check coverage
+npm run test:coverage
+
+# Run E2E tests
+npm run test:e2e
+
+# Type check
+npm run type-check
+
+# Lint
+npm run lint
+```
+
+---
+
+## 🎯 Testing Mantras
+
+**Remember These Always**:
+
+✅ **"If it's not tested, it's broken"**
+- Assume untested code has bugs
+
+✅ **"Tests are documentation"**
+- Tests show how code should be used
+
+✅ **"Red, Green, Refactor"**
+- Write failing test, make it pass, improve
+
+✅ **"Test behavior, not implementation"**
+- Focus on user perspective
+
+✅ **"Mock external, test internal"**
+- Control dependencies, test your code
+
+✅ **"Fast tests = run tests"**
+- Slow tests don't get run
+
+✅ **"Coverage is a guide, not a goal"**
+- 100% coverage ≠ bug-free code
+
+✅ **"Flaky tests are broken tests"**
+- Fix or delete flaky tests immediately
+
+---
+
+## 📋 Testing Checklist Template
+
+Copy this for every feature:
+
+```markdown
+## Feature: [Feature Name]
+
+### Unit Tests
+- [ ] Utility functions tested
+- [ ] Custom hooks tested
+- [ ] Business logic tested
+- [ ] Edge cases covered
+- [ ] Error handling tested
+
+### Component Tests
+- [ ] Renders correctly
+- [ ] Props handled properly
+- [ ] User interactions work
+- [ ] State updates correctly
+- [ ] Loading states shown
+- [ ] Error states handled
+- [ ] Accessibility verified
+
+### Integration Tests
+- [ ] Component interactions tested
+- [ ] API calls mocked
+- [ ] Data flow verified
+- [ ] Side effects tested
+
+### E2E Tests (if critical)
+- [ ] User journey completed
+- [ ] Cross-browser tested
+- [ ] Mobile tested
+
+### Coverage
+- [ ] >80% overall coverage
+- [ ] >95% critical path coverage
+- [ ] All branches covered
+
+### Quality
+- [ ] All tests pass
+- [ ] Tests are readable
+- [ ] Tests are maintainable
+- [ ] No flaky tests
+- [ ] Fast execution (<5s total)
+```
+
+---
+
+## 🎬 Final Notes
+
+### When You're Stuck
+
+If tests are hard to write:
+1. **Component too complex?** → Break it down
+2. **Too many dependencies?** → Improve architecture
+3. **Implementation-specific?** → Rethink what you're testing
+4. **Flaky?** → Fix the root cause, don't ignore
+
+### When to Skip Tests
+
+Rarely, but acceptable to skip:
+- Proof of concept code
+- Temporary debug code
+- Generated code (migrations, types)
+- Third-party library wrappers (test your usage, not the library)
+
+### Success Metrics
+
+You're doing testing right when:
+- ✅ Tests catch bugs before production
+- ✅ Refactoring is confident and safe
+- ✅ New developers understand code via tests
+- ✅ Deploy on Friday without fear
+- ✅ Tests run in CI/CD successfully
+- ✅ Code review focuses on logic, not bugs
+
+---
+
+## 🌟 Remember
+
+> **"The best time to write tests was when you wrote the code. The second best time is now."**
+
+Every test you write is:
+- 🛡️ Protection against future bugs
+- 📚 Documentation for future developers
+- 🚀 Confidence to ship faster
+- 💪 Insurance for refactoring
+- 🎯 Verification of requirements
+
+**Test with confidence. Ship with pride.** ✨
+
+---
+
+*This document should evolve as you discover new patterns and best practices. Update it regularly based on your learnings!*# Personal Identity Platform - Testing Strategy
+
+## 🎯 Testing Philosophy
+
+> **"Test with confidence, ship with pride"**
+
+Every feature must be thoroughly tested before production. Testing is not optional - it's the foundation of production-grade code. When you vibe code, AI generates tests alongside features. No code reaches production without comprehensive test coverage.
+
+**Core Principle**: Write tests that give you confidence to deploy on Friday evening without worry.
+
+---
+
+## 📊 Testing Pyramid
+
+```
+        /\
+       /E2E\          10% - Critical user flows (Playwright)
+      /------\
+     /Integration\    30% - Component interactions (RTL)
+    /------------\
+   /  Unit Tests  \   60% - Functions, hooks, utilities (Vitest)
+  /----------------\
+```
+
+### Coverage Targets
+- **Overall**: Minimum 80% code coverage
+- **Critical Paths**: 100% coverage (auth, payments, data mutations)
+- **UI Components**: 85% coverage
+- **Utilities/Hooks**: 95% coverage
+- **Happy Paths**: 100% coverage
+- **Edge Cases**: Cover all identified edge cases
+
+---
+
+## 🧪 Testing Stack
+
+### Vitest (Unit & Integration Tests)
+- **Purpose**: Fast unit tests for utilities, hooks, and component logic
+- **Speed**: Milliseconds per test
+- **When**: Test pure functions, calculations, transformations, custom hooks
+
+### React Testing Library (Component Tests)
+- **Purpose**: Test components from user perspective
+- **Philosophy**: Test behavior, not implementation
+- **When**: Test user interactions, rendering logic, conditional displays
+
+### MSW (Mock Service Worker)
+- **Purpose**: Mock API calls and Supabase responses
+- **Strategy**: Intercept network requests, return controlled responses
+- **When**: Testing components that fetch data, form submissions, real-time features
+
+### Playwright (E2E Tests)
+- **Purpose**: Test complete user journeys across real browsers
+- **Coverage**: Critical paths only (auth, core features)
+- **When**: Before major releases, CI/CD pipeline
+
+---
+
+## 📁 Test File Organization
+
+```
+src/
+├── components/
+│   ├── ui/
+│   │   ├── Button.tsx
+│   │   ├── Button.test.tsx          # Component tests
+│   │   └── Button.stories.tsx       # Storybook
+│   └── features/
+│       ├── Hero/
+│       │   ├── Hero.tsx
+│       │   ├── Hero.test.tsx
+│       │   └── __tests__/
+│       │       ├── Hero.integration.test.tsx
+│       │       └── Hero.a11y.test.tsx
+├── hooks/
+│   ├── useAuth.ts
+│   └── useAuth.test.ts              # Hook tests
+├── utils/
+│   ├── formatDate.ts
+│   └── formatDate.test.ts           # Utility tests
+└── services/
+    ├── supabase/
+    │   ├── auth.ts
+    │   ├── auth.test.ts
+    │   └── __mocks__/
+    │       └── handlers.ts          # MSW handlers
+
+tests/
+├── e2e/                             # Playwright E2E tests
+│   ├── auth.spec.ts
+│   ├── mini-apps.spec.ts
+│   └── user-journey.spec.ts
+├── fixtures/                        # Test data
+│   ├── users.ts
+│   └── content.ts
+└── setup/                           # Test configuration
+    ├── vitest.setup.ts
+    └── playwright.config.ts
+```
+
+**Naming Conventions**:
+- Unit/Component tests: `ComponentName.test.tsx`
+- Integration tests: `ComponentName.integration.test.tsx`
+- E2E tests: `feature-name.spec.ts`
+- Test utilities: `test-utils.tsx`
+- Mock handlers: `handlers.ts`
+
+---
+
+## 🎨 Unit Testing (Vitest)
+
+### What to Test
+
+**Pure Functions & Utilities**:
+```typescript
+// utils/formatDate.ts
+export function formatDate(date: Date, format: string): string {
+  // Implementation
+}
+
+// utils/formatDate.test.ts
+import { describe, it, expect } from 'vitest';
+import { formatDate } from './formatDate';
+
+describe('formatDate', () => {
+  it('formats date in MM/DD/YYYY format', () => {
+    const date = new Date('2024-01-15');
+    expect(formatDate(date, 'MM/DD/YYYY')).toBe('01/15/2024');
+  });
+
+  it('handles invalid dates gracefully', () => {
+    const invalidDate = new Date('invalid');
+    expect(formatDate(invalidDate, 'MM/DD/YYYY')).toBe('Invalid Date');
+  });
+
+  it('formats date in different locales', () => {
+    const date = new Date('2024-01-15');
+    expect(formatDate(date, 'DD/MM/YYYY')).toBe('15/01/2024');
+  });
+
+  it('handles edge case: leap year', () => {
+    const date = new Date('2024-02-29');
+    expect(formatDate(date, 'MM/DD/YYYY')).toBe('02/29/2024');
+  });
+});
+```
+
+**Custom Hooks**:
+```typescript
+// hooks/useAuth.test.ts
+import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { useAuth } from './useAuth';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+describe('useAuth', () => {
+  it('returns null user when not authenticated', () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
+  });
+
+  it('provides login function', async () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    await waitFor(() => {
+      result.current.login('test@example.com', 'password123');
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  it('handles login errors', async () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    await expect(
+      result.current.login('invalid@example.com', 'wrong')
+    ).rejects.toThrow('Invalid credentials');
+  });
+});
+```
+
+**Business Logic**:
+```typescript
+// services/scoring.test.ts
+import { describe, it, expect } from 'vitest';
+import { calculateScore, determineLevel } from './scoring';
+
+describe('Scoring System', () => {
+  describe('calculateScore', () => {
+    it('calculates score correctly for basic game', () => {
+      const result = calculateScore({
+        moves: 10,
+        timeElapsed: 30,
+        difficulty: 'easy',
+      });
+      expect(result).toBe(100);
+    });
+
+    it('applies difficulty multiplier', () => {
+      const easy = calculateScore({ moves: 10, timeElapsed: 30, difficulty: 'easy' });
+      const hard = calculateScore({ moves: 10, timeElapsed: 30, difficulty: 'hard' });
+      expect(hard).toBeGreaterThan(easy);
+    });
+
+    it('penalizes for excess moves', () => {
+      const few = calculateScore({ moves: 5, timeElapsed: 30, difficulty: 'easy' });
+      const many = calculateScore({ moves: 50, timeElapsed: 30, difficulty: 'easy' });
+      expect(few).toBeGreaterThan(many);
+    });
+  });
+});
+```
+
+### Testing Patterns
+
+**Arrange-Act-Assert (AAA)**:
+```typescript
+it('adds two numbers correctly', () => {
+  // Arrange
+  const a = 5;
+  const b = 3;
+
+  // Act
+  const result = add(a, b);
+
+  // Assert
+  expect(result).toBe(8);
+});
+```
+
+**Test Edge Cases**:
+- Null/undefined inputs
+- Empty arrays/strings
+- Boundary values (0, -1, MAX_INT)
+- Invalid data types
+- Network failures
+- Async errors
+
+**Use Descriptive Test Names**:
+```typescript
+// ❌ Bad
+it('works', () => { });
+
+// ✅ Good
+it('formats phone number with country code when user is international', () => { });
+```
+
+---
+
+## 🎭 Component Testing (React Testing Library)
+
+### Testing Philosophy
+
+**DO Test**:
+- What users see (rendered output)
+- What users can do (interactions)
+- State changes from user perspective
+- Accessibility features
+- Error states and loading states
+- Conditional rendering
+
+**DON'T Test**:
+- Implementation details (state variables, methods)
+- Component internals
+- Third-party library internals (MUI)
+- CSS styles (use visual regression for that)
+
+### Component Test Template
+
+```typescript
+// components/ui/Button.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+import { Button } from './Button';
+
+describe('Button', () => {
+  // Basic rendering
+  it('renders button with text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole('button', { name: /click me/i })).toBeInTheDocument();
+  });
+
+  // User interactions
+  it('calls onClick handler when clicked', async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(<Button onClick={handleClick}>Click me</Button>);
+    
+    await user.click(screen.getByRole('button'));
+    
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  // Variants and props
+  it('applies primary variant styles', () => {
+    render(<Button variant="primary">Primary</Button>);
+    const button = screen.getByRole('button');
+    expect(button).toHaveClass('MuiButton-containedPrimary');
+  });
+
+  // Disabled state
+  it('disables button when disabled prop is true', () => {
+    render(<Button disabled>Disabled</Button>);
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+
+  // Loading state
+  it('shows loading spinner when loading', () => {
+    render(<Button loading>Loading</Button>);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+
+  // Accessibility
+  it('is accessible via keyboard', async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+
+    render(<Button onClick={handleClick}>Press me</Button>);
+    
+    await user.tab(); // Focus button
+    await user.keyboard('{Enter}'); // Activate
+    
+    expect(handleClick).toHaveBeenCalled();
+  });
+});
+```
+
+### Complex Component Example
+
+```typescript
+// components/features/ContactForm.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ContactForm } from './ContactForm';
+import { server } from '@/mocks/server';
+import { http, HttpResponse } from 'msw';
+
+describe('ContactForm', () => {
+  const user = userEvent.setup();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders all form fields', () => {
+    render(<ContactForm />);
+    
+    expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/message/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
+  });
+
+  it('validates required fields', async () => {
+    render(<ContactForm />);
+    
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    
+    expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
+    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+  });
+
+  it('validates email format', async () => {
+    render(<ContactForm />);
+    
+    await user.type(screen.getByLabelText(/email/i), 'invalid-email');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    
+    expect(await screen.findByText(/invalid email/i)).toBeInTheDocument();
+  });
+
+  it('submits form successfully', async () => {
+    const onSuccess = vi.fn();
+    
+    render(<ContactForm onSuccess={onSuccess} />);
+    
+    await user.type(screen.getByLabelText(/name/i), 'John Doe');
+    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+    await user.type(screen.getByLabelText(/message/i), 'Hello there!');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalled();
+    });
+    
+    expect(screen.getByText(/message sent successfully/i)).toBeInTheDocument();
+  });
+
+  it('handles submission errors gracefully', async () => {
+    // Mock API failure
+    server.use(
+      http.post('/api/contact', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    render(<ContactForm />);
+    
+    await user.type(screen.getByLabelText(/name/i), 'John Doe');
+    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+    await user.type(screen.getByLabelText(/message/i), 'Hello!');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+  });
+
+  it('disables submit button while submitting', async () => {
+    render(<ContactForm />);
+    
+    await user.type(screen.getByLabelText(/name/i), 'John Doe');
+    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
+    await user.type(screen.getByLabelText(/message/i), 'Hello!');
+    
+    const submitButton = screen.getByRole('button', { name: /send/i });
+    await user.click(submitButton);
+    
+    expect(submitButton).toBeDisabled();
+  });
+
+  it('clears form after successful submission', async () => {
+    render(<ContactForm />);
+    
+    const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
+    
+    await user.type(nameInput, 'John Doe');
+    await user.type(emailInput, 'john@example.com');
+    await user.type(screen.getByLabelText(/message/i), 'Hello!');
+    await user.click(screen.getByRole('button', { name: /send/i }));
+    
+    await waitFor(() => {
+      expect(nameInput.value).toBe('');
+      expect(emailInput.value).toBe('');
+    });
+  });
+});
+```
+
+### Accessibility Testing
+
+```typescript
+// components/ui/Dialog.a11y.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect } from 'vitest';
+import { axe, toHaveNoViolations } from 'jest-axe';
+import { Dialog } from './Dialog';
+
+expect.extend(toHaveNoViolations);
+
+describe('Dialog Accessibility', () => {
+  it('has no accessibility violations', async () => {
+    const { container } = render(
+      <Dialog open title="Test Dialog">
+        <p>Dialog content</p>
+      </Dialog>
+    );
+
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('traps focus within dialog', async () => {
+    const user = userEvent.setup();
+    
+    render(
+      <Dialog open title="Test Dialog">
+        <button>First</button>
+        <button>Last</button>
+      </Dialog>
+    );
+
+    const firstButton = screen.getByRole('button', { name: /first/i });
+    const lastButton = screen.getByRole('button', { name: /last/i });
+
+    await user.tab();
+    expect(firstButton).toHaveFocus();
+
+    await user.tab();
+    expect(lastButton).toHaveFocus();
+
+    await user.tab();
+    expect(firstButton).toHaveFocus(); // Wrapped back
+  });
+
+  it('closes on Escape key', async () => {
+    const onClose = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <Dialog open onClose={onClose} title="Test">
+        Content
+      </Dialog>
+    );
+
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('has proper ARIA attributes', () => {
+    render(
+      <Dialog open title="Important Dialog" ariaDescribedBy="dialog-desc">
+        <p id="dialog-desc">This is important</p>
+      </Dialog>
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-labelledby');
+    expect(dialog).toHaveAttribute('aria-describedby', 'dialog-desc');
+  });
+});
+```
+
+### Query Priority (RTL)
+
+Use queries in this priority order:
+
+1. **getByRole**: `getByRole('button', { name: /submit/i })`
+2. **getByLabelText**: `getByLabelText(/email/i)`
+3. **getByPlaceholderText**: `getByPlaceholderText(/enter email/i)`
+4. **getByText**: `getByText(/welcome/i)`
+5. **getByDisplayValue**: `getByDisplayValue('John')`
+6. **getByAltText**: `getByAltText(/profile picture/i)`
+7. **getByTitle**: `getByTitle(/close/i)`
+8. **getByTestId**: `getByTestId('custom-element')` (last resort)
+
+---
+
+## 🌐 API Mocking (MSW)
+
+### Setup MSW Handlers
+
+```typescript
+// mocks/handlers.ts
+import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+  // Supabase Auth
+  http.post('https://*.supabase.co/auth/v1/token', () => {
+    return HttpResponse.json({
+      access_token: 'mock-token',
+      user: {
+        id: '123',
+        email: 'test@example.com',
+        user_metadata: { name: 'Test User' },
+      },
+    });
+  }),
+
+  // Contact form submission
+  http.post('/api/contact', async ({ request }) => {
+    const body = await request.json();
+    
+    if (!body.email) {
+      return new HttpResponse(null, { status: 400 });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      message: 'Message sent successfully',
+    });
+  }),
+
+  // Mini-app scores
+  http.get('/api/mini-apps/:id/scores', ({ params }) => {
+    return HttpResponse.json([
+      { id: 1, score: 1000, username: 'Player1' },
+      { id: 2, score: 950, username: 'Player2' },
+    ]);
+  }),
+
+  // User profile
+  http.get('/api/users/me', () => {
+    return HttpResponse.json({
+      id: '123',
+      name: 'Test User',
+      preferences: {
+        theme: 'sunflower',
+        notifications: true,
+      },
+    });
+  }),
+];
+```
+
+```typescript
+// mocks/server.ts
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const server = setupServer(...handlers);
+```
+
+```typescript
+// vitest.setup.ts
+import { beforeAll, afterEach, afterAll } from 'vitest';
+import { server } from './mocks/server';
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+```
+
+### Using MSW in Tests
+
+```typescript
+// components/UserProfile.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { server } from '@/mocks/server';
+import { http, HttpResponse } from 'msw';
+import { UserProfile } from './UserProfile';
+
+describe('UserProfile', () => {
+  it('displays user data after loading', async () => {
+    render(<UserProfile userId="123" />);
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText(/test user/i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles API errors gracefully', async () => {
+    // Override handler for this test
+    server.use(
+      http.get('/api/users/me', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    render(<UserProfile userId="123" />);
+
+    expect(await screen.findByText(/error loading profile/i)).toBeInTheDocument();
+  });
+
+  it('shows retry button on error', async () => {
+    server.use(
+      http.get('/api/users/me', () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    render(<UserProfile userId="123" />);
+
+    const retryButton = await screen.findByRole('button', { name: /retry/i });
+    expect(retryButton).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## 🎬 E2E Testing (Playwright)
+
+### When to Write E2E Tests
+
+Write E2E tests for:
+- ✅ Authentication flows (signup, login, logout)
+- ✅ Critical user journeys (contact form, mini-app usage)
+- ✅ Payment/transaction flows (if applicable)
+- ✅ Multi-step processes
+- ✅ Cross-page interactions
+- ✅ Real-time features
+
+Don't E2E test:
+- ❌ Individual component behavior (use RTL)
+- ❌ Pure UI variations
+- ❌ Every edge case (too slow)
+
+### E2E Test Examples
+
+```typescript
+// tests/e2e/auth.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Authentication Flow', () => {
+  test('user can sign up successfully', async ({ page }) => {
+    await page.goto('/');
+    
+    // Click sign up button
+    await page.getByRole('button', { name: /sign up/i }).click();
+    
+    // Fill registration form
+    await page.getByLabel(/name/i).fill('John Doe');
+    await page.getByLabel(/email/i).fill('john@example.com');
+    await page.getByLabel(/password/i).fill('SecurePass123!');
+    await page.getByLabel(/confirm password/i).fill('SecurePass123!');
+    
+    // Submit form
+    await page.getByRole('button', { name: /create account/i }).click();
+    
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+    
+    // Verify welcome message
+    await expect(page.getByText(/welcome, john/i)).toBeVisible();
+  });
+
+  test('user can login with existing credentials', async ({ page }) => {
+    await page.goto('/login');
+    
+    await page.getByLabel(/email/i).fill('existing@example.com');
+    await page.getByLabel(/password/i).fill('password123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    
+    await expect(page).toHaveURL('/dashboard');
+  });
+
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.goto('/login');
+    
+    await page.getByLabel(/email/i).fill('wrong@example.com');
+    await page.getByLabel(/password/i).fill('wrongpass');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    
+    await expect(page.getByText(/invalid credentials/i)).toBeVisible();
+  });
+
+  test('user can logout', async ({ page }) => {
+    // Login first
+    await page.goto('/login');
+    await page.getByLabel(/email/i).fill('test@example.com');
+    await page.getByLabel(/password/i).fill('password123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    
+    // Logout
+    await page.getByRole('button', { name: /profile/i }).click();
+    await page.getByRole('menuitem', { name: /logout/i }).click();
+    
+    // Verify redirected to home
+    await expect(page).toHaveURL('/');
+  });
+});
+```
+
+```typescript
+// tests/e2e/mini-app-journey.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Mini-App User Journey', () => {
+  test('complete tic-tac-toe game flow', async ({ page }) => {
+    await page.goto('/');
+    
+    // Navigate to mini-apps
+    await page.getByRole('link', { name: /mini apps/i }).click();
+    
+    // Select Tic-Tac-Toe
+    await page.getByRole('button', { name: /tic-tac-toe/i }).click();
+    
+    // Verify game loaded
+    await expect(page.getByText(/tic-tac-toe/i)).toBeVisible();
+    
+    // Play game (make moves)
+    const cells = page.getByTestId('game-cell');
+    await cells.nth(0).click(); // Player X
+    await cells.nth(3).click(); // Player O
+    await cells.nth(1).click(); // Player X
+    await cells.nth(4).click(); // Player O
+    await cells.nth(2).click(); // Player X wins
+    
+    // Verify win message
+    await expect(page.getByText(/x wins/i)).toBeVisible();
+    
+    // Click play again
+    await page.getByRole('button', { name: /play again/i }).click();
+    
+    // Verify board reset
+    await expect(cells.first()).toHaveText('');
+  });
+
+  test('saves score when logged in', async ({ page }) => {
+    // Login first
+    await page.goto('/login');
+    await page.getByLabel(/email/i).fill('test@example.com');
+    await page.getByLabel(/password/i).fill('password123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    
+    // Navigate to mini-app
+    await page.getByRole('link', { name: /mini apps/i }).click();
+    await page.getByRole('button', { name: /typing speed/i }).click();
+    
+    // Complete test
+    await page.keyboard.type('the quick brown fox jumps over the lazy dog');
+    
+    // Verify score saved
+    await expect(page.getByText(/score saved/i)).toBeVisible();
+    
+    // Check leaderboard
+    await page.getByRole('button', { name: /leaderboard/i }).click();
+    await expect(page.getByText(/test@example.com/i)).toBeVisible();
+  });
+});
+```
+
+```typescript
+// tests/e2e/contact-form.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Contact Form', () => {
+  test('submits contact form successfully', async ({ page }) => {
+    await page.goto('/');
+    
+    await page.getByRole('link', { name: /contact/i }).click();
+    
+    await page.getByLabel(/name/i).fill('Jane Doe');
+    await page.getByLabel(/email/i).fill('jane@example.com');
+    await page.getByLabel(/subject/i).fill('Project Inquiry');
+    await page.getByLabel(/message/i).fill('I would like to discuss a project with you.');
+    
+    await page.getByRole('button', { name: /send message/i }).click();
+    
+    await expect(page.getByText(/message sent successfully/i)).toBeVisible();
+  });
+
+  test('validates form fields', async ({ page }) => {
+    await page.goto('/contact');
+    
+    await page.getByRole('button', { name: /send message/i }).click();
+    
+    await expect(page.getByText(/name is required/i)).toBeVisible();
+    await expect(page.getByText(/email is required/i)).toBeVisible();
+    await expect(page.getByText(/message is required/i)).toBeVisible();
+  });
+});
+```
+
+### Playwright Configuration
+
+```typescript
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  
+  // Run tests in parallel
+  fullyParallel: true,
+  
+  // Fail build on CI if tests were accidentally left only
+  forbidOnly: !!process.env.CI,
+  
+  // Retry failed tests on CI
+  retries: process.env.CI ? 2 : 0,
+  
+  // Reporters
+  reporter: [
+    ['html'],
+    ['list'],
+    ['json', { outputFile: 'test-results.json' }],
+  ],
+  
+  use: {
+    // Base URL
+    baseURL: 'http://localhost:5173',
+    
+    // Collect trace on failure
+    trace: 'on-first-retry',
+    
+    // Screenshot on failure
+    screenshot: 'only-on-failure',
+    
+    // Video on failure
+    video: 'retain-on-failure',
+  },
+
+  // Configure projects for major browsers
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
+  ],
+
+  // Run local dev server before tests
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+---
+
+## 🎯 Test Coverage Requirements
+
+### Coverage Thresholds
+
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      
+      // Coverage thresholds - build fails if not met
+      thresholds: {
+        global: {
+          statements: 80,
+          branches: 80,
+          functions: 80,
+          lines: 80,
+        },
+        // Higher thresholds for critical paths
+        './src/services/': {
+          statements: 95,
+          branches: 90,
+          functions: 95,
+          lines: 95,
+        },
+        './src/hooks/': {
+          statements: 90,
+          branches: 85,
+          functions: 90,
+          lines: 90,
+        },
+        './src/utils/': {
+          statements: 95,
+          branches: 90,
+          functions: 95,
+          lines: 95,
+        },
+      },
+      
+      // Exclude from coverage
+      exclude: [
+        'node_modules/',
+        'tests/',
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/*.spec.ts',
+        '**/*.config.ts',
+        '**/types/',
+        '**/*.d.ts',
+        '**/mocks/',
+        '**/__mocks__/',
+        'src/main.tsx', // Entry point
+      ],
+      
+      // Include in coverage
+      include: [
+        'src/**/*.ts',
+        'src/**/*.tsx',
+      ],
+    },
+  },
+});
