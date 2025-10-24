@@ -54,29 +54,7 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
 
     // Helper function to generate star color based on type
     const getStarColor = (): StarColor => {
-      const rand = Math.random();
-      if (rand < 0.6) {
-        // White-blue stars (hot, bright)
-        return {
-          r: 200 + Math.random() * 55,
-          g: 220 + Math.random() * 35,
-          b: 255,
-        };
-      } else if (rand < 0.9) {
-        // Yellow-white stars (sun-like)
-        return {
-          r: 255,
-          g: 240 + Math.random() * 15,
-          b: 200 + Math.random() * 55,
-        };
-      } else {
-        // Red-orange stars (cooler)
-        return {
-          r: 255,
-          g: 180 + Math.random() * 50,
-          b: 100 + Math.random() * 80,
-        };
-      }
+      return { r: 255, g: 255, b: 255 };
     };
 
     // Star class
