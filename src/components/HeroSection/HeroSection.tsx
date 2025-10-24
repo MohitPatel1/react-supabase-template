@@ -4,10 +4,17 @@ import { nanoid } from 'nanoid';
 import sunflowerVideo from '../../assets/videos/fly-over-field-of-blossom-yellow-sunflowers-slow-movement.webm';
 import AnimatedText from './AnimatedText';
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  show?: boolean;
+}
+
+const HeroSection = ({ show = true }: HeroSectionProps) => {
   return (
     <Box
-      component="section"
+      component={motion.section}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: show ? 1 : 0 }}
+      transition={{ duration: 0.7 }}
       sx={{
         position: 'relative',
         width: '100%',
@@ -19,26 +26,28 @@ const HeroSection = () => {
       }}
     >
       {/* Video Background */}
-      <Box
-        component="video"
-        autoPlay
-        loop
-        muted
-        playsInline
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          zIndex: 0,
-          opacity: 0.6,
-          filter: 'blur(0.5px) brightness(1.1)',
-        }}
-      >
-        <source src={sunflowerVideo} type="video/webm" />
-      </Box>
+      {show && (
+        <Box
+          component="video"
+          autoPlay
+          loop
+          muted
+          playsInline
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+            opacity: 0.6,
+            filter: 'blur(0.5px) brightness(1.1)',
+          }}
+        >
+          <source src={sunflowerVideo} type="video/webm" />
+        </Box>
+      )}
 
       {/* Gradient Overlay to blend video seamlessly */}
       <Box

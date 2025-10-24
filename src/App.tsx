@@ -1,11 +1,11 @@
 import { Box } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
-import HeroSection from './components/HeroSection';
+import IntroTransition from './components/IntroTransition';
 
 function HomePage() {
   return (
     <Box>
-      <HeroSection />
+      <IntroTransition />
     </Box>
   );
 }
