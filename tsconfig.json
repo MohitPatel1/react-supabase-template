@@ -26,6 +26,7 @@
     "strictBindCallApply": true,
     "strictPropertyInitialization": true,
     "alwaysStrict": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
 
     /* Path Aliases */
     "baseUrl": ".",
