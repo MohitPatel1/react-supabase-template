@@ -124,10 +124,7 @@ export const theme = createTheme({
           textTransform: 'none',
           fontSize: '1.125rem',
           padding: '12px 32px',
-          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-          },
+          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)'          
         },
       },
     },
@@ -136,11 +133,7 @@ export const theme = createTheme({
         root: {
           borderRadius: 24,
           boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-12px) rotate(1deg)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-          },
+          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',          
         },
       },
     },

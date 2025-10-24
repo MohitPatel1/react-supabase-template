@@ -1,24 +1,11 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
+import HeroSection from './components/HeroSection';
 
 function HomePage() {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 4,
-      }}
-    >
-      <Typography variant="h1" gutterBottom>
-        🌻 Welcome to My Mohit's Digital Presence
-      </Typography>
-      <Typography variant="body1" color="text.secondary">
-        Built with Love, Care, Coffee and a lot of Coding
-      </Typography>
+    <Box>
+      <HeroSection />
     </Box>
   );
 }
@@ -33,4 +20,3 @@ function App() {
 }
 
 export default App;
-

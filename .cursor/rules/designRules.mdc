@@ -279,7 +279,6 @@ const animations = {
 - **Stagger**: Multiple elements cascade in
 
 **Hover Interactions**:
-- **Card Lift**: Transform translateY(-8px) + shadow increase
 - **Tilt Effect**: 3D rotate on cursor position
 - **Glow**: Box-shadow with primary color
 - **Grow**: Scale(1.05) with smooth bounce
@@ -376,14 +375,7 @@ const cardStyles = {
     padding: '2rem',
     boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
     transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-  },
-  
-  // Hover state
-  hover: {
-    transform: 'translateY(-12px) rotate(1deg)',  // Lift + slight tilt
-    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-    // Border glow with primary color
-  },
+  },  
   
   // Variants
   variants: {
@@ -407,18 +399,7 @@ const buttonStyles = {
     fontWeight: 600,
     padding: '0 2.5rem',
     background: 'linear-gradient(135deg, sunflower, golden)',
-    boxShadow: '0 4px 16px rgba(255, 217, 61, 0.4)',
-    
-    // Hover
-    hover: {
-      transform: 'translateY(-2px) scale(1.02)',
-      boxShadow: '0 8px 24px rgba(255, 217, 61, 0.6)',
-    },
-    
-    // Active
-    active: {
-      transform: 'translateY(0) scale(0.98)',
-    }
+    boxShadow: '0 4px 16px rgba(255, 217, 61, 0.4)',    
   },
   
   // Icon buttons
@@ -880,10 +861,7 @@ const sunflowerTheme = createTheme({
           textTransform: 'none',
           fontSize: '1.125rem',
           padding: '12px 32px',
-          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-          },
+          transition: 'all 400ms cubic-bezier(0.4, 0.0, 0.2, 1)'
         },
       },
     },
