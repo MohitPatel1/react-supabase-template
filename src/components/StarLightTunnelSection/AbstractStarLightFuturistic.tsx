@@ -1,6 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-
 interface StarTunnelHeroProps {
   onComplete?: () => void;
 }
@@ -28,10 +26,10 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
     let animationFrameId: number;
     const stars: Star[] = [];
     let startTime = Date.now();
-    const initialSpeed = 15;
-    const accelerationFactor = 1.4;
-    const maxSpeed = 200;
-    const maxDuration = 3500; // 3.5 seconds
+    const initialSpeed = 10;
+    const accelerationFactor = 1.25;
+    const maxSpeed = 300;
+    const maxDuration = 5000; // 5 seconds
 
     // Set canvas size
     const resizeCanvas = () => {
@@ -85,11 +83,14 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
         this.pz = this.z;
 
         // Calculate star properties with speed-based modifications
-        const baseSize = (1 - this.z / 2000) * 3;
+        const baseSize = (1 - this.z / 2000) * 2;
         const speedFactor = currentSpeed / initialSpeed;
-        const size = baseSize * speedFactor;
+        
+        // At low speeds, draw as dots. At high speeds, thick lines
+        const size = Math.min(baseSize * Math.pow(speedFactor, 1.5), 8);
+        
         const baseOpacity = 1 - this.z / 2000;
-        const speedOpacity = Math.min(1, 0.5 + (currentSpeed / maxSpeed) * 0.5);
+        const speedOpacity = Math.min(1, 0.3 + (currentSpeed / maxSpeed) * 0.7);
         const opacity = baseOpacity * speedOpacity;
 
         // Draw trail
@@ -135,13 +136,15 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
       const elapsed = Date.now() - startTime;
       const elapsedSeconds = elapsed / 1000;
 
-      // Calculate exponential acceleration
+      // Calculate exponential acceleration - smoother curve over 5 seconds
       const speed = Math.min(
-        initialSpeed * Math.pow(accelerationFactor, elapsedSeconds * 10),
+        initialSpeed * Math.pow(accelerationFactor, elapsedSeconds * 8),
         maxSpeed
       );
 
-      ctx!.fillStyle = 'rgba(0, 5, 15, 0.2)';
+      // Trail length increases with speed for more dramatic effect
+      const trailAlpha = Math.min(0.3, 0.05 + (speed / maxSpeed) * 0.25);
+      ctx!.fillStyle = `rgba(0, 5, 15, ${trailAlpha})`;
       ctx!.fillRect(0, 0, canvas!.width, canvas!.height);
 
       stars.forEach(star => {
@@ -150,7 +153,7 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
       });
 
       // Check if we've reached max duration or max speed
-      if (elapsed >= maxDuration || speed >= maxSpeed - 5) {
+      if (elapsed >= maxDuration || speed >= maxSpeed - 10) {
         onComplete?.();
       }
 
@@ -173,37 +176,6 @@ const StarTunnelHero = ({ onComplete }: StarTunnelHeroProps) => {
         ref={canvasRef}
         className="absolute inset-0 w-full h-full"
       />
-
-      {/* Hero Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3 }}
-          className="max-w-5xl"
-        >
-          <motion.h1 
-            className="text-6xl md:text-8xl font-bold text-white mb-6 tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.5 }}
-          >
-            Welcome to
-            <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Mohit's Digital Presence
-            </span>
-          </motion.h1>
-
-          <motion.p
-            className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.7 }}
-          >
-            Built with love, care, coffee, and a lot of coding ☕
-          </motion.p>            
-        </motion.div>
-      </div>
     </div>
   );
 };

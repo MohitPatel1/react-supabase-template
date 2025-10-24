@@ -34,13 +34,13 @@ const IntroTransition = () => {
       return;
     }
 
-    // Phase 1: Tunnel (0-3.5s)
+    // Phase 1: Tunnel (0-5s)
     const tunnelTimer = setTimeout(() => {
       setPhase('flash');
-    }, 3500);
+    }, 5000);
 
-    // Phase 2: Flash (3.5-3.8s) - handled by WhiteFlash component
-    // Phase 3: Hero (3.8s+) - handled by WhiteFlash completion
+    // Phase 2: Flash (5-5.3s) - handled by WhiteFlash component
+    // Phase 3: Hero (5.3s+) - handled by WhiteFlash completion
 
     return () => {
       clearTimeout(tunnelTimer);
