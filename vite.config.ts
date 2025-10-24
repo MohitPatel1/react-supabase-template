@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -87,6 +87,11 @@ export default defineConfig({
       '@mui/icons-material',
       '@tanstack/react-query',
     ],
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './tests/setup/vitest.setup.ts',
   },
   define: {
     'process.env': process.env,

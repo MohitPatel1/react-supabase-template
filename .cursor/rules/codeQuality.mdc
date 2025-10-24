@@ -68,6 +68,7 @@ src/
 │   └── variables.css    # CSS variables
 ├── assets/               # Static assets
 │   ├── images/          # Images
+│   ├── videos/           # Videos
 │   ├── icons/           # Custom icons
 │   └── fonts/           # Custom fonts
 └── __tests__/            # Test utilities and setup
