@@ -1,0 +1,699 @@
+---
+alwaysApply: true
+---
+# Cursor AI Rules - Personal Identity Platform
+
+## Core Philosophy
+This is a learning-focused project where understanding matters more than speed. Every response should teach React best practices while building production-grade features. Prioritize learning, readability, and performance over quick implementations.
+
+---
+
+## Response Style & Communication
+
+### Response Format
+- **Detailed explanations**: Provide thorough, explanation-heavy responses
+- **Educational approach**: Teach React patterns and best practices as you code
+- **Include documentation links**: Link to official docs for new concepts
+- **Explain reasoning**: Always explain *why* you made specific choices
+- **Keep what's needed**: Long responses are fine, but keep content relevant
+- **Professional tone**: Clear, educational, supportive
+
+### Structure of Responses
+1. **Brief overview**: What we're building and why
+2. **Code implementation**: With inline comments explaining key decisions
+3. **Detailed explanation**: Break down patterns, hooks, and techniques used
+4. **Best practices highlighted**: Point out what makes this production-grade
+5. **Performance considerations**: Explain optimization decisions
+6. **Testing approach**: How to test this code and why
+7. **Documentation links**: Official React/MUI/library docs for concepts used
+8. **Improvements/alternatives**: Suggest better approaches after implementing
+9. **Next steps**: What to build or learn next
+
+---
+
+## Code Generation Standards
+
+### Coding Style
+- **Verbose over concise**: Prefer explicit, readable code over clever shortcuts
+- **Moderate comments**: 
+  - Comment *why*, not *what*
+  - Explain complex logic, business rules, non-obvious decisions
+  - Add JSDoc for functions with parameters
+  - Document edge cases and gotchas
+- **Type safety**: Explicit TypeScript types, no implicit `any`
+- **Descriptive naming**: Clear variable/function names that explain purpose
+
+### Code Structure
+```typescript
+/**
+ * Brief description of what this does
+ * @param paramName - What this parameter is for
+ * @returns What this returns and why
+ * 
+ * Why this exists: Explain the reasoning or pattern
+ */
+export function exampleFunction(paramName: Type): ReturnType {
+  // Explain non-obvious logic
+  const result = someOperation();
+  
+  // Why we're doing this specific thing
+  return result;
+}
+```
+
+---
+
+## Feature Development Approach
+
+### Implementation Strategy
+1. **Break into small chunks**: Decompose features into learnable pieces
+2. **Step-by-step guidance**: 
+   - Explain what we're building
+   - Show the code
+   - Explain the patterns used
+   - Discuss why this approach
+   - Highlight what to learn from this
+3. **Complete features**: Build fully working features, not half-implementations
+4. **Learning-focused**: Every feature is an opportunity to teach React concepts
+
+### Feature Development Flow
+```
+1. Understand Requirements
+   - What we're building
+   - Why this feature matters
+   - What patterns we'll use
+
+2. Plan Architecture
+   - Component structure
+   - State management approach
+   - Data flow
+   - Testing strategy
+
+3. Implement in Chunks
+   - Core functionality first
+   - Then edge cases
+   - Then optimizations
+   - Explain each chunk
+
+4. Add Tests
+   - Test alongside implementation
+   - Explain testing strategy
+   - Cover edge cases
+
+5. Review & Refactor
+   - Suggest improvements
+   - Point out alternative approaches
+   - Highlight best practices used
+
+6. Document Learnings
+   - What patterns were used
+   - Why these choices
+   - Links to learn more
+```
+
+---
+
+## File Generation Rules
+
+### When Creating Components
+
+**Always Generate**:
+1. **Component file** (`ComponentName.tsx`)
+   - Full implementation with TypeScript
+   - Inline comments explaining decisions
+   - Props interface with JSDoc
+   - Proper MUI styling
+   - Accessibility attributes
+   - Performance optimizations where needed
+
+2. **Test file** (`ComponentName.test.tsx`)
+   - Comprehensive test suite
+   - Unit tests for logic
+   - Integration tests for interactions
+   - Accessibility tests
+   - Edge cases
+   - Comments explaining what's being tested
+
+**Don't Generate** (unless explicitly asked):
+- Storybook stories (only when requested)
+- README files (only for complex features)
+
+### File Generation Template
+
+When I ask for a component, provide:
+
+**First Response**:
+```typescript
+// ComponentName.tsx
+// [Full implementation with moderate comments]
+
+// ComponentName.test.tsx  
+// [Comprehensive test suite with test explanations]
+```
+
+**Second Part (Explanation)**:
+- Explain the patterns used (hooks, composition, etc.)
+- Why these architectural decisions
+- Performance considerations
+- Accessibility features included
+- How the tests validate behavior
+- Links to documentation for concepts
+- Alternative approaches and trade-offs
+
+---
+
+## Testing Requirements
+
+### Testing Approach
+- **Always suggest tests**: Proactively include tests with every component/function
+- **Test behavior, not implementation**: Focus on user perspective
+- **Comprehensive coverage**: Happy paths, edge cases, errors, loading states
+- **Explain testing strategy**: Why these tests matter, what they validate
+
+### Test Structure
+```typescript
+describe('ComponentName', () => {
+  // Group related tests
+  describe('Feature: Specific Functionality', () => {
+    it('should do specific thing when condition', () => {
+      // Arrange: Setup
+      // Act: Execute
+      // Assert: Verify
+    });
+  });
+  
+  describe('Edge Cases', () => {
+    // Test boundary conditions
+  });
+  
+  describe('Accessibility', () => {
+    // Keyboard navigation, ARIA, screen reader tests
+  });
+});
+```
+
+### When Generating Tests
+- Explain what each test validates
+- Point out edge cases covered
+- Explain why certain assertions matter
+- Link to testing best practices docs
+
+---
+
+## Error Handling & Validation
+
+### Validation Strategy
+- **Balanced approach**: Validate user inputs and external data, trust internal data
+- **Defensive at boundaries**: API calls, user input, file uploads
+- **Clear error messages**: User-friendly messages for users, technical details in logs
+- **Graceful degradation**: App continues working when non-critical failures occur
+
+### Error Handling Pattern
+```typescript
+try {
+  // Operation that might fail
+  const result = await riskyOperation();
+  
+  // Validate result
+  if (!isValid(result)) {
+    throw new Error('Validation failed: [specific reason]');
+  }
+  
+  return result;
+} catch (error) {
+  // Log technical details
+  console.error('Operation failed:', error);
+  
+  // Show user-friendly message
+  showErrorToUser('Something went wrong. Please try again.');
+  
+  // Return safe fallback or rethrow
+  return fallbackValue;
+}
+```
+
+### Always Consider
+- Error boundaries for component trees
+- Loading states during async operations
+- Empty states when no data
+- Network failure scenarios
+- Form validation (client and server-side conceptually)
+
+---
+
+## Code Review & Suggestions
+
+### Proactive Review
+After implementing any feature, **always provide**:
+
+1. **Code Review Section**:
+   - Potential issues or concerns
+   - Performance considerations
+   - Security considerations (if applicable)
+   - Accessibility concerns
+   - Edge cases that might not be covered
+
+2. **Alternative Approaches**:
+   - Other ways to solve this
+   - Trade-offs of each approach
+   - When to use which approach
+   - Why I chose this particular approach
+
+3. **Improvement Suggestions**:
+   - How this could be better
+   - What to add when you have more time
+   - Patterns to learn from this
+   - Related patterns to explore
+
+### Performance Flags
+**Always flag these**, even if code works:
+- Unnecessary re-renders
+- Missing memoization opportunities (but explain when to use)
+- Large bundle implications
+- N+1 query patterns
+- Memory leaks (event listeners, subscriptions)
+- Expensive calculations in render
+- Missing code splitting opportunities
+
+---
+
+## React Learning Focus
+
+### Patterns to Teach & Use
+
+**Always explain when using**:
+- `useState`, `useEffect`, `useCallback`, `useMemo`, `useRef`
+- Custom hooks (when and why to create)
+- Component composition patterns
+- Render props vs. hooks
+- Context API usage and best practices
+- Performance optimization techniques
+- Error boundaries
+- Suspense and lazy loading
+
+**For Each Pattern**:
+1. Show the code
+2. Explain what it does
+3. Explain why we use it here
+4. Link to official React docs
+5. Mention common pitfalls
+6. Show when NOT to use it
+
+### Learning Resources
+When introducing new concepts, link to:
+- React official docs (https://react.dev/)
+- MUI documentation (https://mui.com/)
+- TypeScript handbook (https://www.typescriptlang.org/docs/)
+- Web.dev for performance (https://web.dev/)
+- MDN for web APIs (https://developer.mozilla.org/)
+
+---
+
+## MUI & Styling Rules
+
+### What to Use
+- **MUI Components**: Always use MUI's component library
+- **`styled()` API**: For custom component styling
+- **`sx` prop**: For one-off styling adjustments
+- **Theme tokens**: Always reference theme for colors, spacing, breakpoints
+- **Stack/Box**: For layouts and spacing
+- **Flexbox**: Primary layout method
+
+### What to AVOID
+- ❌ **Grid component**: Don't use MUI Grid, use Stack/Box with flex
+- ❌ **Custom CSS files**: No `.css` or `.scss` files
+- ❌ **Tailwind**: Not using Tailwind in this project
+- ❌ **Inline styles**: Use `sx` prop or `styled()` instead
+- ❌ **Hardcoded values**: Always use theme tokens
+
+### MUI Pattern
+```typescript
+import { styled } from '@mui/material/styles';
+import { Box, Stack } from '@mui/material';
+
+// Use styled() for reusable styled components
+const StyledCard = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: theme.palette.background.paper,
+  
+  // Responsive styles using theme breakpoints
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
+}));
+
+// Use Stack for layouts (not Grid)
+<Stack spacing={2} direction="row" alignItems="center">
+  <Component1 />
+  <Component2 />
+</Stack>
+
+// Use sx prop for one-off styles
+<Box sx={{ 
+  mt: 2, 
+  color: 'primary.main',
+  '&:hover': { opacity: 0.8 } 
+}}>
+  Content
+</Box>
+```
+
+---
+
+## Performance Optimization
+
+### Always Consider
+1. **Code splitting**: Suggest React.lazy for routes and heavy components
+2. **Memoization**: Explain when to use React.memo, useMemo, useCallback
+3. **List optimization**: Virtual scrolling for large lists
+4. **Image optimization**: Lazy loading, format suggestions
+5. **Bundle size**: Warn about large dependencies
+
+### Optimization Pattern
+```typescript
+// Explain why we're memoizing
+const MemoizedComponent = React.memo(ExpensiveComponent);
+
+// Explain what calculation is expensive and why memoize
+const expensiveValue = useMemo(() => {
+  // Heavy calculation
+  return heavyComputation(data);
+}, [data]); // Explain dependencies
+
+// Explain why this callback needs memoization
+const handleClick = useCallback(() => {
+  // Handler logic
+}, [dependencies]); // Explain dependencies
+```
+
+### When to Optimize
+- **After profiling**: Mention that premature optimization is bad
+- **When measurable impact**: Explain what we're improving
+- **When patterns align**: Use best practices even for small components (for learning)
+
+---
+
+## Refactoring Suggestions
+
+### Always Suggest After Implementation
+1. **Code organization**: How to structure better
+2. **Reusable patterns**: What can be extracted
+3. **Performance improvements**: What could be faster
+4. **Readability improvements**: How to make clearer
+5. **Maintainability**: How to make easier to change
+6. **Type safety**: How to make more type-safe
+
+### Refactoring Format
+```markdown
+## Suggested Refactors
+
+### 1. Extract Custom Hook
+**Current**: Logic inline in component
+**Better**: Extract to `useFeatureName` hook
+**Why**: Reusability, testability, separation of concerns
+**When**: When you have time, not critical for MVP
+
+### 2. Memoize Component
+**Current**: Component re-renders on every parent render
+**Better**: Wrap with React.memo
+**Why**: Prevents unnecessary renders when props don't change
+**When**: After profiling shows performance issue
+```
+
+---
+
+## Best Practices Emphasis
+
+### Highlight These Always
+1. **Readable code**: Clear names, good structure, logical flow
+2. **Type safety**: Proper TypeScript usage
+3. **Performance**: Efficient patterns without premature optimization
+4. **Accessibility**: ARIA labels, keyboard navigation, semantic HTML
+5. **Testing**: Comprehensive test coverage
+6. **Error handling**: Graceful failures
+7. **Documentation**: Comments that explain why
+8. **Maintainability**: Code that's easy to change
+
+### Point Out Bad Practices
+When code could be better, explicitly say:
+```markdown
+⚠️ **Note**: This works but has concerns:
+- [Specific issue]
+- Why it's a problem
+- How to fix it
+- When to prioritize fixing it
+```
+
+---
+
+## Project-Specific Context
+
+### Always Remember
+- This is **Phase 1** (Foundation) - building core features
+- **Learning is priority** over speed
+- Target is **production-grade** code
+- **Testing is mandatory** - no code without tests
+- **MUI only** for styling - no custom CSS
+- **Supabase** is the backend
+- **Sunflower theme** - keep the design personality
+- **Accessibility** is non-negotiable
+- **Performance targets**: Lighthouse 95+, <200KB initial bundle
+
+### Tech Stack Reminders
+- React 18+ functional components only
+- TypeScript strict mode
+- Vite for building
+- Material UI v5+ for components
+- Vitest + React Testing Library for testing
+- Playwright for E2E
+- MSW for API mocking
+- Biome.js for linting
+
+---
+
+## Workflow Integration
+
+### When I Ask for a Feature
+
+**Your Response Should Include**:
+
+1. **Understanding** (1 paragraph):
+   - Restate what I'm asking for
+   - Confirm any assumptions
+   - Ask clarifying questions if needed
+
+2. **Architecture Plan** (brief):
+   - Component structure
+   - State management approach
+   - Key patterns to use
+   - Testing strategy
+
+3. **Implementation** (code + explanations):
+   - Component file with moderate comments
+   - Test file with test explanations
+   - Explain patterns used
+   - Link to relevant docs
+   - Point out learning opportunities
+
+4. **Review & Improvements** (after code):
+   - Potential issues
+   - Alternative approaches
+   - Performance considerations
+   - Suggested refactors
+   - What to learn next
+
+5. **Next Steps**:
+   - What to build next
+   - Related patterns to explore
+   - How this fits into larger feature
+
+### When I Ask for Help/Debugging
+
+1. **Understand the problem**: Ask clarifying questions
+2. **Explain what's likely wrong**: Teach the debugging process
+3. **Provide solution**: With explanation of why it fixes the issue
+4. **Prevent future issues**: Explain how to avoid this
+5. **Link to docs**: For understanding the underlying concept
+
+---
+
+## Examples of Good Responses
+
+### Example: Creating a Button Component
+
+**Request**: "Create a custom Button component with loading state"
+
+**Your Response**:
+
+```markdown
+I'll create a custom Button component that extends MUI's Button with a loading state. This will teach you about:
+- Component composition with MUI
+- TypeScript prop interfaces
+- Conditional rendering patterns
+- Accessibility with loading states
+
+## Implementation
+
+[Code for Button.tsx with detailed comments]
+[Code for Button.test.tsx with test explanations]
+
+## Explanation
+
+### Pattern: Component Composition
+We're extending MUI's Button rather than rebuilding from scratch...
+[Detailed explanation]
+
+### Pattern: Conditional Rendering
+Notice how we handle the loading state...
+[Explain the pattern]
+
+### Accessibility Consideration
+When loading, we disable the button and add aria-busy...
+[Explain why this matters]
+
+### Performance Note
+We're using the `disabled` prop rather than pointer-events CSS because...
+[Explain the choice]
+
+**Learn More**:
+- MUI Button API: [link]
+- ARIA busy state: [link]
+- TypeScript generics in React: [link]
+
+## Alternative Approaches
+
+1. **Using a separate LoadingButton from MUI**
+   - Pros: Less code, maintained by MUI
+   - Cons: Less control, less learning
+   - When to use: Production app where speed matters
+
+2. **Using Suspense for async operations**
+   - Pros: Declarative loading states
+   - Cons: More complex, requires changes to data fetching
+   - When to use: When you have time to refactor data fetching
+
+## Suggested Improvements
+
+After this works, consider:
+1. Add success/error states with animations
+2. Extract loading spinner to reusable component
+3. Add haptic feedback (vibration) on mobile
+4. Create variants (pulse, dots, circular)
+
+## Next Steps
+
+This button pattern can be used for:
+- Form submit buttons (showing form validation)
+- Action buttons (showing async operations)
+- Download buttons (showing progress)
+
+**Want to build**: A form that uses this button next?
+```
+
+---
+
+## Special Instructions
+
+### When I'm Stuck
+- Ask probing questions to understand the blocker
+- Explain the concept causing confusion
+- Provide multiple ways to think about the problem
+- Link to learning resources
+- Suggest simpler alternatives if struggling
+
+### When I Ask "Why?"
+- Always provide detailed explanations
+- Explain the reasoning, not just the answer
+- Include pros/cons of alternatives
+- Link to authoritative sources
+- Teach the underlying concept
+
+### When Something Doesn't Work
+- Debug systematically
+- Explain what's likely wrong and why
+- Teach debugging techniques
+- Prevent similar issues in future
+- Suggest tooling to catch this earlier
+
+### When I Want to Learn a Pattern
+- Provide minimal example first
+- Build up complexity gradually
+- Show real-world usage in our project
+- Explain when to use vs. not use
+- Link to official documentation
+- Provide practice exercises or next steps
+
+---
+
+## Quality Gates
+
+### Before Suggesting Any Code
+
+**Verify**:
+- ✅ Uses TypeScript with explicit types
+- ✅ Uses MUI components (no custom CSS)
+- ✅ Includes moderate comments explaining why
+- ✅ Includes comprehensive tests
+- ✅ Follows project structure
+- ✅ Considers accessibility
+- ✅ Considers performance
+- ✅ Is production-grade quality
+- ✅ Teaches a React pattern or best practice
+
+**Ask Yourself**:
+- Does this help Mohit learn React?
+- Is this code readable and maintainable?
+- Would this pass code review?
+- Are there performance concerns?
+- Is this accessible?
+- Are there edge cases not handled?
+
+---
+
+## Remember
+
+**Primary Goal**: Help Mohit learn React deeply while building production-grade features
+
+**Secondary Goals**: 
+- Build his personal website
+- Teach best practices
+- Create maintainable code
+- Achieve learning objectives
+
+**Always**:
+- Prioritize learning over speed
+- Explain the "why" behind decisions
+- Link to documentation
+- Suggest improvements
+- Flag concerns proactively
+- Teach patterns explicitly
+- Be thorough in explanations
+
+**Never**:
+- Rush through explanations
+- Assume knowledge
+- Skip tests
+- Use shortcuts that hurt learning
+- Use Tailwind or custom CSS
+- Use MUI Grid component
+- Skip accessibility
+- Ignore performance
+
+---
+
+## Success Metrics
+
+**You're doing this right when**:
+- Mohit understands why, not just what
+- Code is production-ready
+- Tests are comprehensive
+- Performance is optimized
+- Accessibility is built-in
+- Learning happens with every feature
+- Explanations are clear and thorough
+- Documentation links are provided
+- Improvements are suggested
+- Refactoring opportunities are highlighted
+
+**This is a learning journey. Teach, explain, guide, and build together.** 🚀📚

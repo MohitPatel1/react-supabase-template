@@ -5,7 +5,7 @@ alwaysApply: true
 
 ## Design Philosophy
 
-This website is Balkrishna's digital presence - a living, breathing space that feels like visiting him in person. Every interaction should be warm, playful, memorable, and uniquely personal. The design celebrates creativity, curiosity, and human connection through high-energy visuals, surprising interactions, and adaptive personalization.
+This website is Mohit's digital presence - a living, breathing space that feels like visiting him in person. Every interaction should be warm, playful, memorable, and uniquely personal. The design celebrates creativity, curiosity, and human connection through high-energy visuals, surprising interactions, and adaptive personalization.
 
 **Core Principle**: "Built just for you" - The website learns, adapts, and remembers each visitor, creating an increasingly personalized experience with every visit.
 
@@ -558,7 +558,7 @@ const gamification = {
 ### Personal Touches
 
 **Throughout the site**:
-- Handwritten-style annotations (as if Balkrishna is explaining)
+- Handwritten-style annotations (as if Mohit is explaining)
 - Personal photos or sketches
 - Voice notes (optional audio messages)
 - Behind-the-scenes content
@@ -915,6 +915,6 @@ Before launching any new section or component:
 
 ## Remember
 
-This website is **alive, personal, and memorable**. Every pixel should spark joy, invite exploration, and make visitors feel like they're getting to know Balkrishna personally. Be bold, be playful, be surprising - but never sacrifice usability or accessibility for aesthetics. 
+This website is **alive, personal, and memorable**. Every pixel should spark joy, invite exploration, and make visitors feel like they're getting to know Mohit personally. Be bold, be playful, be surprising - but never sacrifice usability or accessibility for aesthetics. 
 
 The best design is one that makes people smile while they use it. 🌻✨

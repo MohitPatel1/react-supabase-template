@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: security related decisions
+alwaysApply: false
 ---
 # Security Best Practices Cursor Rules
 

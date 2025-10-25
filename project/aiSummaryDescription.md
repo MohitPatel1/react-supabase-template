@@ -11,7 +11,7 @@
 
 > **"The most delightful way to experience who I am and what I build"**
 
-Every feature, interaction, and pixel must serve this mission. This is not just a portfolio—it's a living digital presence where visitors experience Balkrishna, not just view his work.
+Every feature, interaction, and pixel must serve this mission. This is not just a portfolio—it's a living digital presence where visitors experience Mohit, not just view his work.
 
 ---
 
@@ -796,7 +796,7 @@ VITE_GA_TRACKING_ID=
 1. **Test with confidence, ship with pride**
 2. **Every commit should ask: "Does this feel like me?"**
 3. **If it's not tested, it's broken**
-4. **The website should feel like visiting Balkrishna in person**
+4. **The website should feel like visiting Mohit in person**
 5. **Built just for you - personalization at core**
 
 ---
@@ -937,7 +937,7 @@ When continuing this project with AI:
 
 ## Summary
 
-This is a **production-grade personal identity platform** for Mohit Patel that serves as his complete digital presence. It's not just a portfolio—it's an interactive, living space where visitors experience Balkrishna through delightful interactions, mini-apps, and personalized content.
+This is a **production-grade personal identity platform** for Mohit Patel that serves as his complete digital presence. It's not just a portfolio—it's an interactive, living space where visitors experience Mohit through delightful interactions, mini-apps, and personalized content.
 
 **Tech Stack**: React 18 + TypeScript + Vite + MUI + Supabase + comprehensive testing (Vitest + RTL + Playwright)
 

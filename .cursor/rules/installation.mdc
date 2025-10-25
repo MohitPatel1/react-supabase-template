@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: when to move on to next features
+alwaysApply: false
 ---
 🎯 Complete Package.json Example
 Here's a comprehensive `package.json` with all recommended libraries:

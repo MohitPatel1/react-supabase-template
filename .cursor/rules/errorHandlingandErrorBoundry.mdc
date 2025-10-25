@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: error handling
+alwaysApply: false
 ---
 # React TypeScript Project Configuration
 
