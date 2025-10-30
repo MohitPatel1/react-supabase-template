@@ -8,10 +8,13 @@ import compression from 'vite-plugin-compression';
 export default defineConfig({
   plugins: [
     react(),
-    tsconfigPaths(),
+    tsconfigPaths({
+      root: './',
+      projects: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.vitest.json'],
+    }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'sitemap.xml', 'apple-touch-icon.png', 'feed.xml'],
       manifest: {
         name: 'Personal Identity Platform',
         short_name: 'Identity',
@@ -33,7 +36,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,xml,txt}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -87,14 +90,6 @@ export default defineConfig({
       '@mui/icons-material',
       '@tanstack/react-query',
     ],
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './tests/setup/vitest.setup.ts',
-  },
-  define: {
-    'process.env': process.env,
   },
 });
 

@@ -1,0 +1,10 @@
+# robots.txt for Mohit Patel's Digital Presence
+
+User-agent: *
+Allow: /
+
+# RSS Feed
+Allow: /feed.xml
+
+# Sitemap
+Sitemap: https://mohit.life/sitemap.xml

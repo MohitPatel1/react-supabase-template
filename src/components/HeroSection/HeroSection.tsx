@@ -1,19 +1,16 @@
 import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
+import { memo } from 'react';
 import { nanoid } from 'nanoid';
 import sunflowerVideo from '../../assets/videos/fly-over-field-of-blossom-yellow-sunflowers-slow-movement.webm';
 import AnimatedText from './AnimatedText';
 
-interface HeroSectionProps {
-  show?: boolean;
-}
-
-const HeroSection = ({ show = true }: HeroSectionProps) => {
+const HeroSection = memo(() => {
   return (
     <Box
       component={motion.section}
       initial={{ opacity: 0 }}
-      animate={{ opacity: show ? 1 : 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.7 }}
       sx={{
         position: 'relative',
@@ -26,7 +23,6 @@ const HeroSection = ({ show = true }: HeroSectionProps) => {
       }}
     >
       {/* Video Background */}
-      {show && (
         <Box
           component="video"
           autoPlay
@@ -47,7 +43,6 @@ const HeroSection = ({ show = true }: HeroSectionProps) => {
         >
           <source src={sunflowerVideo} type="video/webm" />
         </Box>
-      )}
 
       {/* Gradient Overlay to blend video seamlessly */}
       <Box
@@ -161,6 +156,8 @@ const HeroSection = ({ show = true }: HeroSectionProps) => {
       })}
     </Box>
   );
-};
+});
+
+HeroSection.displayName = 'HeroSection';
 
 export default HeroSection;
